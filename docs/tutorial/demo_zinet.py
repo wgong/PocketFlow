@@ -493,24 +493,32 @@ class WeightedNode(Node):
 class WeightedFlow(Flow):
     """
     Flow that considers connection weights when selecting the next node.
-    
-    Can use deterministic (highest weight) or probabilistic selection.
+    Supports both binary selection_mode and continuous temperature parameter.
     """
     
-    def __init__(self, start=None, selection_mode="deterministic"):
+    def __init__(self, start=None, selection_mode="deterministic", temperature=None):
         """
         Initialize a weighted flow.
         
         Args:
             start: The starting node
-            selection_mode: 'deterministic' or 'probabilistic'
+            selection_mode: 'deterministic' or 'probabilistic' (legacy)
+            temperature: Controls randomness in selection (0.0-1.0)
+                - 0.0: Purely deterministic (always highest weight)
+                - 1.0: Fully temperature-scaled probabilistic selection
+                - Values between: Blend of deterministic and probabilistic
+                - None: Use selection_mode parameter instead
         """
         super().__init__(start)
         self.selection_mode = selection_mode
+        
+        # If temperature is provided, it overrides selection_mode
+        self.use_temperature = temperature is not None
+        self.temperature = max(0.0, min(1.0, temperature or 0.0))  # Clamp between 0.0 and 1.0
     
     def get_next_node(self, curr, action):
         """
-        Get the next node based on weights.
+        Get the next node based on weights using either temperature or selection_mode.
         
         Args:
             curr: Current node
@@ -530,42 +538,94 @@ class WeightedFlow(Flow):
             
         if not successors:
             return None
+        
+        # Extract nodes and weights
+        nodes, weights = zip(*successors)
+        
+        # TEMPERATURE-BASED SELECTION
+        if self.use_temperature:
+            # At temperature 0, always return highest weighted node
+            if self.temperature == 0.0:
+                return max(successors, key=lambda x: x[1])[0]
             
-        if self.selection_mode == "deterministic":
-            # Return highest weighted node
-            return max(successors, key=lambda x: x[1])[0]
-        else:
-            # Probabilistic selection
-            nodes, weights = zip(*successors)
-            total_weight = sum(weights)
-            
-            if total_weight == 0:
-                return None
-                
-            # Normalize weights to probabilities
-            probabilities = [w/total_weight for w in weights]
+            # Apply temperature scaling to weights
+            if self.temperature < 1.0:
+                # As temperature approaches 0, highest weight becomes more dominant
+                scaled_weights = []
+                max_weight = max(weights)
+                for w in weights:
+                    # Calculate distance from max_weight (0 for the highest)
+                    distance = max_weight - w
+                    # Scale the distance by temperature (smaller temp = bigger effect)
+                    scaled_distance = distance / self.temperature if self.temperature > 0 else float('inf')
+                    # Convert back to a weight
+                    scaled_weights.append(max_weight - scaled_distance)
+                    
+                # Handle extreme cases where all weights become effectively 0
+                if sum(scaled_weights) == 0:
+                    return max(successors, key=lambda x: x[1])[0]
+                    
+                probabilities = [w/sum(scaled_weights) for w in scaled_weights]
+            else:
+                # At temperature 1, use original weights directly
+                total_weight = sum(weights)
+                if total_weight == 0:
+                    return None
+                probabilities = [w/total_weight for w in weights]
             
             # Select node based on probability
             return random.choices(nodes, probabilities)[0]
+        
+        # LEGACY BINARY SELECTION MODE
+        else:
+            if self.selection_mode == "deterministic":
+                # Return highest weighted node
+                return max(successors, key=lambda x: x[1])[0]
+            else:
+                # Probabilistic selection
+                total_weight = sum(weights)
+                
+                if total_weight == 0:
+                    return None
+                    
+                # Normalize weights to probabilities
+                probabilities = [w/total_weight for w in weights]
+                
+                # Select node based on probability
+                return random.choices(nodes, probabilities)[0]
 
+# Example usage of the WeightedFlow class            
+if False:
+    # Legacy binary approach
+    legacy_flow = WeightedFlow(start=start_node, selection_mode="deterministic")
+    # or
+    legacy_flow = WeightedFlow(start=start_node, selection_mode="probabilistic")
+
+    # New temperature-based approach
+    temp_flow = WeightedFlow(start=start_node, temperature=0.0)  # Fully deterministic
+    # or
+    temp_flow = WeightedFlow(start=start_node, temperature=0.5)  # Balanced
+    # or
+    temp_flow = WeightedFlow(start=start_node, temperature=1.0)  # Fully probabilistic
 
 # Extension: Proficiency-Based Learning Flow for ZiNets
 class ZiNetsLearningFlow(WeightedFlow):
     """
     Specialized flow for ZiNets character learning.
     
-    Filters nodes based on proficiency level.
+    Filters nodes based on proficiency level and supports temperature-based selection.
     """
     
-    def __init__(self, proficiency_level="intro", selection_mode="probabilistic"):
+    def __init__(self, proficiency_level="intro", selection_mode="probabilistic", temperature=None):
         """
         Initialize ZiNets learning flow.
         
         Args:
             proficiency_level: 'intro', 'beginner', 'intermediate', or 'advanced'
-            selection_mode: 'deterministic' or 'probabilistic'
+            selection_mode: 'deterministic' or 'probabilistic' (legacy)
+            temperature: Controls randomness in selection (0.0-1.0)
         """
-        super().__init__(None, selection_mode)
+        super().__init__(None, selection_mode, temperature)
         self.proficiency_level = proficiency_level
         self.threshold_map = {
             "intro": 0.95,       # Only elemental building block characters
@@ -605,22 +665,22 @@ class ZiNetsLearningFlow(WeightedFlow):
         
         if not filtered_successors:
             return None
-            
-        # Use weighted selection among filtered nodes
-        if self.selection_mode == "deterministic":
-            # Return highest weighted node
-            return max(filtered_successors, key=lambda x: x[1])[0]
-        else:
-            # Probabilistic selection
-            nodes, weights = zip(*filtered_successors)
-            total_weight = sum(weights)
-            
-            if total_weight == 0:
-                return None
-                
-            probabilities = [w/total_weight for w in weights]
-            return random.choices(nodes, probabilities)[0]
-
+        
+        # Store original successors
+        orig_successors = curr.successors.get(action or "default")
+        
+        # Replace with filtered successors for selection
+        curr.successors[action or "default"] = filtered_successors
+        
+        # Use parent class method to select among filtered successors
+        # This will use either temperature or selection_mode based on configuration
+        selected = super().get_next_node(curr, action)
+        
+        # Restore original successors
+        curr.successors[action or "default"] = orig_successors
+        
+        return selected
+    
 
 # ----- DEMONSTRATION EXAMPLES -----
 
@@ -844,7 +904,7 @@ async def demo_async_flow():
 
 
 def demo_weighted_connections():
-    """Demonstrates weighted connections for different proficiency levels."""
+    """Demonstrates weighted connections using both binary and temperature-based selection."""
     print("\n=== WEIGHTED CONNECTIONS DEMONSTRATION ===")
     
     # Create character nodes
@@ -878,12 +938,13 @@ def demo_weighted_connections():
             action="visual"
         )
     
-    # Run with different proficiency levels
-    for level in ["intro", "beginner", "intermediate", "advanced"]:
-        print(f"\nTesting '{level}' proficiency level:")
+    # 1. First run with original binary selection modes
+    print("\nOriginal Binary Selection Modes:")
+    for mode in ["deterministic", "probabilistic"]:
+        print(f"\nTesting '{mode}' selection mode (binary):")
         
-        flow = ZiNetsLearningFlow(proficiency_level=level)
-        flow.start_node = radical_water
+        # Create a basic WeightedFlow with the binary selection mode
+        flow = WeightedFlow(start=radical_water, selection_mode=mode)
         
         # Sample exploration
         current = radical_water
@@ -900,8 +961,61 @@ def demo_weighted_connections():
             
         print(f"Exploration path: {' → '.join(path)}")
     
+    # 2. Now run with temperature-based selection at different temperatures
+    print("\nNew Temperature-Based Selection:")
+    for temp in [0.0, 0.3, 0.7, 1.0]:
+        print(f"\nTesting temperature = {temp}:")
+        
+        # Create a WeightedFlow with the temperature parameter
+        flow = WeightedFlow(start=radical_water, temperature=temp)
+        
+        # Sample exploration
+        current = radical_water
+        path = [current.params["character"]]
+        
+        # Follow 5 steps in the flow
+        for _ in range(5):
+            next_node = flow.get_next_node(current, "visual")
+            if not next_node:
+                break
+                
+            path.append(next_node.params["character"])
+            current = next_node
+            
+        print(f"Exploration path: {' → '.join(path)}")
+    
+    # 3. Run ZiNetsLearningFlow with different proficiency levels and temperatures
+    print("\nZiNetsLearningFlow with Temperature:")
+    # Update ZiNetsLearningFlow to use temperature
+    proficiency_levels = ["intro", "beginner", "intermediate", "advanced"]
+    temperatures = [0.0, 0.5, 1.0]
+    
+    for level in proficiency_levels:
+        for temp in temperatures:
+            print(f"\nProficiency: '{level}', Temperature: {temp}")
+            
+            # Modify ZiNetsLearningFlow to accept temperature parameter
+            flow = ZiNetsLearningFlow(proficiency_level=level)
+            flow.use_temperature = True
+            flow.temperature = temp
+            flow.start_node = radical_water
+            
+            # Sample exploration
+            current = radical_water
+            path = [current.params["character"]]
+            
+            # Follow 5 steps in the flow
+            for _ in range(5):
+                next_node = flow.get_next_node(current, "visual")
+                if not next_node:
+                    break
+                    
+                path.append(next_node.params["character"])
+                current = next_node
+                
+            print(f"Exploration path: {' → '.join(path)}")
+    
     return "Weighted connections demonstration completed"
-
 
 # Run all demonstrations
 if __name__ == "__main__":

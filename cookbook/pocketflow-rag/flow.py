@@ -1,5 +1,12 @@
 from pocketflow import Flow
-from nodes import EmbedDocumentsNode, CreateIndexNode, EmbedQueryNode, RetrieveDocumentNode, ChunkDocumentsNode, GenerateAnswerNode
+from nodes import (
+    EmbedDocumentsNode, 
+    CreateIndexNode, 
+    EmbedQueryNode, 
+    RetrieveDocumentNode, 
+    ChunkDocumentsNode, 
+    GenerateAnswerNode
+)
 
 def get_offline_flow():
     # Create offline flow for document indexing
