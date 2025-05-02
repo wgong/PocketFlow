@@ -20,6 +20,23 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import click
 
+from util_log import get_logger, set_log_level, configure_logging
+
+logger = get_logger("demo-fib")
+
+LOG_LEVEL = "DEBUG"   # For detailed logging during development
+# # "WARNING"           # Or for minimal output in production
+# set_log_level(LOG_LEVEL)      
+
+LOG_FILE = Path(__file__).name + ".log"
+
+# Or completely customize the logging setup
+configure_logging(
+    level=LOG_LEVEL,
+    format_str='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    log_file=LOG_FILE  # Also log to a file
+)
+
 class BaseNode:
     """Base class for all nodes in the flow framework."""
     
@@ -99,21 +116,19 @@ class BatchNode(Node):
     
     def _exec(self, items):
         """Execute the node logic on each item in the batch."""
-        print(f"BatchNode._exec received {len(items) if items else 0} items")
+        logger.debug(f"BatchNode._exec received {len(items) if items else 0} items")
         results = []
         
         for item in (items or []):
             try:
                 result = self.exec(item)
-                print(f"Processed batch item: {item.get('id', 'unknown')}, result: {type(result)}")
+                logger.debug(f"Processed batch item: {item.get('id', 'unknown')}, result: {result}")
                 results.append(result)
             except Exception as e:
-                print(f"Error processing batch item: {e}")
+                logger.debug(f"Error processing batch item: {e}")
         
-        print(f"BatchNode._exec completed with {len(results)} results")
+        logger.debug(f"BatchNode._exec completed with {results} results")
         return results
-
-
 
 class Flow(BaseNode):
     """Orchestrates execution of multiple connected nodes."""
@@ -170,10 +185,10 @@ class BatchFlow(Flow):
         """Run the flow for each set of parameters in the batch."""
         # Prepare the batch items
         batch_items = self.prep(shared) or []
-        print(f"BatchFlow._run prepared {len(batch_items)} batch items")
+        logger.debug(f"BatchFlow._run prepared {len(batch_items)} batch items")
         
         if not batch_items:
-            print("Warning: No batch items to process")
+            logger.debug("Warning: No batch items to process")
             return self.post(shared, batch_items, [])
         
         # Process the batch with the start node
@@ -191,7 +206,7 @@ class BatchFlow(Flow):
             # Return the final results via post method
             return self.post(shared, batch_items, batch_results)
         else:
-            print("Error: No start node defined for batch flow")
+            logger.debug("Error: No start node defined for batch flow")
             return self.post(shared, batch_items, [])
 
 
@@ -207,7 +222,7 @@ def create_basic_fibonacci_flow(limit=10):
     
     # Configure initialization node
     def init_exec(prep_res):
-        print("Initializing Fibonacci sequence...")
+        logger.debug("Initializing Fibonacci sequence...")
         # Return dummy result, actual work in post
         return None
     
@@ -215,7 +230,7 @@ def create_basic_fibonacci_flow(limit=10):
         # Initialize the sequence with first two numbers
         shared["sequence"] = [0, 1]
         shared["current_index"] = 1
-        print(f"Initialized sequence: {shared['sequence']}")
+        logger.debug(f"Initialized sequence: {shared['sequence']}")
         # Go to check node
         return "default"
     
@@ -224,7 +239,7 @@ def create_basic_fibonacci_flow(limit=10):
     
     # Configure generation node
     def generate_exec(prep_res):
-        print("Generating next Fibonacci number...")
+        logger.debug("Generating next Fibonacci number...")
         # Return dummy result, actual work in post
         return None
     
@@ -234,7 +249,7 @@ def create_basic_fibonacci_flow(limit=10):
         next_num = sequence[-1] + sequence[-2]
         sequence.append(next_num)
         shared["current_index"] += 1
-        print(f"Generated: {next_num}, new sequence length: {len(shared['sequence'])}")
+        logger.debug(f"Generated: {next_num}, new sequence length: {len(shared['sequence'])}")
         # Always go back to check node
         return "default"
     
@@ -243,21 +258,21 @@ def create_basic_fibonacci_flow(limit=10):
     
     # Configure limit check node
     def check_limit_exec(prep_res):
-        print("Checking if we've reached the limit...")
+        logger.debug("Checking if we've reached the limit...")
         # Return dummy result, actual work in post
         return None
     
     def check_limit_post(shared, prep_res, exec_res):
         # Check if we've reached the limit
         current_index = shared["current_index"]
-        print(f"Current index: {current_index}, limit: {limit}")
+        logger.debug(f"Current index: {current_index}, limit: {limit}")
         
         if current_index < limit - 1:  # -1 because we start with 2 numbers
-            print(f"Continuing generation ({current_index + 1} of {limit})...")
+            logger.debug(f"Continuing generation ({current_index + 1} of {limit})...")
             # Go to generate node
             return "continue"
         else:
-            print(f"Reached limit. Sequence complete with {len(shared['sequence'])} terms")
+            logger.debug(f"Reached limit. Sequence complete with {len(shared['sequence'])} terms")
             # End the flow
             return "done"
     
@@ -311,7 +326,7 @@ def create_fibonacci_batch_flow():
     def generate_fibonacci(params):
         """Generate Fibonacci sequence for a single batch item."""
         limit = params.get("limit", 10)
-        print(f"Generating Fibonacci sequence with limit={limit}")
+        logger.debug(f"Generating Fibonacci sequence with limit={limit}")
         
         # Initialize the sequence
         sequence = [0, 1]
@@ -326,7 +341,7 @@ def create_fibonacci_batch_flow():
             "last_number": sequence[-1],
             "id": params.get("id", "unknown")
         }
-        print(f"Generated Fibonacci sequence with limit={limit}, length={len(sequence)}")
+        logger.debug(f"Generated Fibonacci sequence with limit={limit}, length={len(sequence)}")
         return result
     
     # Configure the batch node
@@ -334,7 +349,7 @@ def create_fibonacci_batch_flow():
     
     # Define post-processing for batch node
     def fib_node_post(shared, prep_res, exec_res):
-        print(f"Fibonacci node post-processing: {len(exec_res) if exec_res else 0} results")
+        logger.debug(f"Fibonacci node post-processing: {len(exec_res) if exec_res else 0} results")
         # Results will be handled by the flow's post method
         return "default"
     
@@ -345,24 +360,24 @@ def create_fibonacci_batch_flow():
     
     # Prepare batch parameters
     def prep_batch(shared):
-        print("Preparing batch of Fibonacci sequence parameters...")
+        logger.debug("Preparing batch of Fibonacci sequence parameters...")
         batch_params = [
             {"limit": 10, "id": "small"},
             {"limit": 30, "id": "medium"},
             {"limit": 100, "id": "large"}
         ]
-        print(f"Created {len(batch_params)} batch items")
+        logger.debug(f"Created {len(batch_params)} batch items")
         return batch_params
     
     # Post-process the batch results
     def post_batch(shared, prep_res, exec_res):
-        print(f"Batch flow post-processing: {len(exec_res) if exec_res else 0} results")
+        logger.debug(f"Batch flow post-processing: {len(exec_res) if exec_res else 0} results")
         
         # Display the results
-        print("\nFibonacci Sequences Generated:")
+        logger.debug("\nFibonacci Sequences Generated:")
         
         if not exec_res:
-            print("Warning: No results found.")
+            logger.debug("Warning: No results found.")
             return "completed"
         
         # Process and display the results
@@ -371,10 +386,10 @@ def create_fibonacci_batch_flow():
             sequence = result.get("sequence", [])
             last_number = result.get("last_number", None)
             
-            print(f"\nSequence with limit {limit}:")
-            print(f"  • First few numbers: {sequence[:min(5, len(sequence))]}...")
-            print(f"  • Last number: {last_number}")
-            print(f"  • Total numbers: {len(sequence)}")
+            logger.debug(f"\nSequence with limit {limit}:")
+            logger.debug(f"  • First few numbers: {sequence[:min(5, len(sequence))]}...")
+            logger.debug(f"  • Last number: {last_number}")
+            logger.debug(f"  • Total numbers: {len(sequence)}")
         
         return "completed"
     
@@ -392,7 +407,7 @@ def create_parallel_fibonacci_flow():
     
     def generate_fibonacci(limit):
         """Generate Fibonacci sequence up to the specified limit."""
-        print(f"Generating sequence with limit={limit}")
+        logger.debug(f"Generating sequence with limit={limit}")
         sequence = [0, 1]
         while len(sequence) < limit:
             sequence.append(sequence[-1] + sequence[-2])
@@ -403,38 +418,38 @@ def create_parallel_fibonacci_flow():
         }
     
     def prep_parallel(shared):
-        print("Preparing parallel Fibonacci sequence generation...")
+        logger.debug("Preparing parallel Fibonacci sequence generation...")
         return [10, 30, 100]
     
     def exec_parallel(limits):
-        print(f"Executing with limits: {limits}")
+        logger.debug(f"Executing with limits: {limits}")
         # Skip ThreadPoolExecutor and just process sequentially for debugging
         results = []
         for limit in limits:
             result = generate_fibonacci(limit)
             results.append(result)
-            print(f"Added result for limit={limit}")
-        print(f"Generated {len(results)} results")
+            logger.debug(f"Added result for limit={limit}")
+        logger.debug(f"Generated {len(results)} results")
         return results
     
     def post_parallel(shared, prep_res, exec_res):
-        print(f"Post-processing results: {type(exec_res)}")
+        logger.debug(f"Post-processing results: {type(exec_res)}")
         results = [] if exec_res is None else exec_res
         shared["results"] = results
         
-        print(f"\nParallel processing complete. Results: {len(results)} sequences")
+        logger.debug(f"\nParallel processing complete. Results: {len(results)} sequences")
         
         if not results:
-            print("No sequences were generated.")
+            logger.debug("No sequences were generated.")
             return "completed"
         
         for result in results:
             limit = result["limit"]
             sequence = result["sequence"]
-            print(f"\nSequence with limit {limit}:")
-            print(f"  • First few numbers: {sequence[:5]}...")
-            print(f"  • Last number: {result['last_number']}")
-            print(f"  • Total numbers: {len(sequence)}")
+            logger.debug(f"\nSequence with limit {limit}:")
+            logger.debug(f"  • First few numbers: {sequence[:5]}...")
+            logger.debug(f"  • Last number: {result['last_number']}")
+            logger.debug(f"  • Total numbers: {len(sequence)}")
         
         return "completed"
     
@@ -447,15 +462,15 @@ def create_parallel_fibonacci_flow():
 
 def parallel_fibonacci_with_threading():
     """Direct implementation of parallel Fibonacci generation using ThreadPoolExecutor."""
-    print("\n=== FIBONACCI PARALLEL PROCESSING DEMONSTRATION (WITH THREADING) ===")
+    logger.debug("\n=== FIBONACCI PARALLEL PROCESSING DEMONSTRATION (WITH THREADING) ===")
     
     # Generate a Fibonacci sequence
     def generate_fibonacci(limit):
-        print(f"Thread started: Generating sequence with limit={limit}")
+        logger.debug(f"Thread started: Generating sequence with limit={limit}")
         sequence = [0, 1]
         while len(sequence) < limit:
             sequence.append(sequence[-1] + sequence[-2])
-        print(f"Thread completed: Generated sequence with limit={limit}")
+        logger.debug(f"Thread completed: Generated sequence with limit={limit}")
         return {
             "limit": limit,
             "sequence": sequence,
@@ -464,7 +479,7 @@ def parallel_fibonacci_with_threading():
     
     # Define the limits to process
     limits = [10, 30, 100]
-    print(f"Processing {len(limits)} limits in parallel: {limits}")
+    logger.debug(f"Processing {len(limits)} limits in parallel: {limits}")
     
     # Process using ThreadPoolExecutor
     results = []
@@ -472,50 +487,50 @@ def parallel_fibonacci_with_threading():
     
     with ThreadPoolExecutor(max_workers=3) as executor:
         # Submit all tasks
-        print("Submitting tasks to thread pool...")
+        logger.debug("Submitting tasks to thread pool...")
         future_to_limit = {executor.submit(generate_fibonacci, limit): limit for limit in limits}
         
         # Collect results as they complete
         for future in future_to_limit:
             try:
                 limit = future_to_limit[future]
-                print(f"Waiting for result with limit={limit}...")
+                logger.debug(f"Waiting for result with limit={limit}...")
                 result = future.result()
-                print(f"Received result for limit={limit}")
+                logger.debug(f"Received result for limit={limit}")
                 results.append(result)
             except Exception as e:
-                print(f"Error processing limit {future_to_limit[future]}: {e}")
+                logger.debug(f"Error processing limit {future_to_limit[future]}: {e}")
     
     end_time = time.time()
     execution_time = end_time - start_time
-    print(f"All threads completed in {execution_time:.4f} seconds")
+    logger.debug(f"All threads completed in {execution_time:.4f} seconds")
     
     # Sort results by limit for consistent display
     results.sort(key=lambda x: x["limit"])
     
     # Display results
-    print("\nFibonacci Sequences Generated:")
+    logger.debug("\nFibonacci Sequences Generated:")
     
     for result in results:
         limit = result["limit"]
         sequence = result["sequence"]
         last_number = result["last_number"]
         
-        print(f"\nSequence with limit {limit}:")
-        print(f"  • First few numbers: {sequence[:5]}...")
-        print(f"  • Last number: {last_number}")
-        print(f"  • Total numbers: {len(sequence)}")
+        logger.debug(f"\nSequence with limit {limit}:")
+        logger.debug(f"  • First few numbers: {sequence[:5]}...")
+        logger.debug(f"  • Last number: {last_number}")
+        logger.debug(f"  • Total numbers: {len(sequence)}")
     
     return results
 
 
 def parallel_fibonacci():
     """Direct implementation of parallel Fibonacci generation without Flow class."""
-    print("\n=== FIBONACCI PARALLEL PROCESSING DEMONSTRATION ===")
+    logger.debug("\n=== FIBONACCI PARALLEL PROCESSING DEMONSTRATION ===")
     
     # Generate a Fibonacci sequence
     def generate_fibonacci(limit):
-        print(f"Generating sequence with limit={limit}")
+        logger.debug(f"Generating sequence with limit={limit}")
         sequence = [0, 1]
         while len(sequence) < limit:
             sequence.append(sequence[-1] + sequence[-2])
@@ -527,7 +542,7 @@ def parallel_fibonacci():
     
     # Process limits
     limits = [10, 30, 100]
-    print(f"Processing limits: {limits}")
+    logger.debug(f"Processing limits: {limits}")
     
     # Process each limit
     results = []
@@ -536,17 +551,17 @@ def parallel_fibonacci():
         results.append(result)
     
     # Display results
-    print("\nFibonacci Sequences Generated:")
+    logger.debug("\nFibonacci Sequences Generated:")
     
     for result in results:
         limit = result["limit"]
         sequence = result["sequence"]
         last_number = result["last_number"]
         
-        print(f"\nSequence with limit {limit}:")
-        print(f"  • First few numbers: {sequence[:5]}...")
-        print(f"  • Last number: {last_number}")
-        print(f"  • Total numbers: {len(sequence)}")
+        logger.debug(f"\nSequence with limit {limit}:")
+        logger.debug(f"  • First few numbers: {sequence[:5]}...")
+        logger.debug(f"  • Last number: {last_number}")
+        logger.debug(f"  • Total numbers: {len(sequence)}")
     
     return results
 
@@ -567,7 +582,7 @@ def create_composite_fibonacci_flow():
     
     # Node for limit=10 calculation
     def calculate_fib_10(prep_res):
-        print("Calculating Fibonacci sequence with limit=10...")
+        logger.debug("Calculating Fibonacci sequence with limit=10...")
         sequence = [0, 1]
         while len(sequence) < 10:
             sequence.append(sequence[-1] + sequence[-2])
@@ -577,7 +592,7 @@ def create_composite_fibonacci_flow():
         # Store result in shared context
         sequence = exec_res
         shared["fib_10"] = sequence
-        print(f"Generated sequence with limit=10: {sequence[:5]}... (length: {len(sequence)})")
+        logger.debug(f"Generated sequence with limit=10: {sequence[:5]}... (length: {len(sequence)})")
         return "continue"
     
     fib_node_10.exec = calculate_fib_10
@@ -585,7 +600,7 @@ def create_composite_fibonacci_flow():
     
     # Node for limit=30 calculation (builds on limit=10)
     def calculate_fib_30(prep_res):
-        print("Calculating Fibonacci sequence with limit=30 (building from limit=10)...")
+        logger.debug("Calculating Fibonacci sequence with limit=30 (building from limit=10)...")
         # Get the base sequence from parameters
         base_sequence = prep_res  # Passed from prep function
         
@@ -602,14 +617,14 @@ def create_composite_fibonacci_flow():
     def prep_fib_30(shared):
         # Get the result from the previous calculation
         base_sequence = shared.get("fib_10", [])
-        print(f"Using base sequence of length {len(base_sequence)}")
+        logger.debug(f"Using base sequence of length {len(base_sequence)}")
         return base_sequence
     
     def post_fib_30(shared, prep_res, exec_res):
         # Store result in shared context
         sequence = exec_res
         shared["fib_30"] = sequence
-        print(f"Generated sequence with limit=30: {sequence[:5]}... (length: {len(sequence)})")
+        logger.debug(f"Generated sequence with limit=30: {sequence[:5]}... (length: {len(sequence)})")
         return "continue"
     
     fib_node_30.prep = prep_fib_30
@@ -618,7 +633,7 @@ def create_composite_fibonacci_flow():
     
     # Node for limit=100 calculation (builds on limit=30)
     def calculate_fib_100(prep_res):
-        print("Calculating Fibonacci sequence with limit=100 (building from limit=30)...")
+        logger.debug("Calculating Fibonacci sequence with limit=100 (building from limit=30)...")
         # Get the base sequence from parameters
         base_sequence = prep_res  # Passed from prep function
         
@@ -635,20 +650,20 @@ def create_composite_fibonacci_flow():
     def prep_fib_100(shared):
         # Get the result from the previous calculation
         base_sequence = shared.get("fib_30", [])
-        print(f"Using base sequence of length {len(base_sequence)}")
+        logger.debug(f"Using base sequence of length {len(base_sequence)}")
         return base_sequence
     
     def post_fib_100(shared, prep_res, exec_res):
         # Store result in shared context
         sequence = exec_res
         shared["fib_100"] = sequence
-        print(f"Generated sequence with limit=100: {sequence[:5]}... (length: {len(sequence)})")
+        logger.debug(f"Generated sequence with limit=100: {sequence[:5]}... (length: {len(sequence)})")
         
         # Print final results
-        print("\nFinal Fibonacci Sequences:")
-        print(f"Sequence (10): Last number = {shared['fib_10'][-1]}")
-        print(f"Sequence (30): Last number = {shared['fib_30'][-1]}")
-        print(f"Sequence (100): Last number = {shared['fib_100'][-1]}")
+        logger.debug("\nFinal Fibonacci Sequences:")
+        logger.debug(f"Sequence (10): Last number = {shared['fib_10'][-1]}")
+        logger.debug(f"Sequence (30): Last number = {shared['fib_30'][-1]}")
+        logger.debug(f"Sequence (100): Last number = {shared['fib_100'][-1]}")
         
         return "done"
     
@@ -675,12 +690,12 @@ def cli():
 @cli.command()
 def parallel_threaded():
     """Run parallel Fibonacci generation using ThreadPoolExecutor"""
-    print("Starting parallel Fibonacci generation with ThreadPoolExecutor...")
+    logger.debug("Starting parallel Fibonacci generation with ThreadPoolExecutor...")
     start_time = time.time()
     results = parallel_fibonacci_with_threading()
     end_time = time.time()
     
-    print(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
     return results
 
 # cli.add_command(parallel_threaded)
@@ -693,45 +708,45 @@ def parallel_direct():
     results = parallel_fibonacci()
     end_time = time.time()
     
-    print(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
     return results
 
 @cli.command()
 @click.option('--limit', '-l', default=10, help='Number of Fibonacci numbers to generate')
 def basic(limit):
     """Run the basic Fibonacci flow with iteration"""
-    print("\n=== BASIC FIBONACCI FLOW DEMONSTRATION ===")
+    logger.debug("\n=== BASIC FIBONACCI FLOW DEMONSTRATION ===")
     flow = create_basic_fibonacci_flow(limit=limit)
     
     start_time = time.time()
     shared_context = {}
     
-    print("Starting flow execution...")
+    logger.debug("Starting flow execution...")
     flow.run(shared_context)
     end_time = time.time()
     
-    print(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
 
     # Print the final shared context
-    print("\nFinal shared context:")
-    print(shared_context)
+    logger.debug("\nFinal shared context:")
+    logger.debug(shared_context)
     
     # Access specific values for the basic flow
     if "sequence" in shared_context:
         sequence = shared_context["sequence"]
-        print(f"\nFibonacci sequence details:")
-        print(f"  First few numbers: {sequence[:min(5, len(sequence))]}...")
-        print(f"  Last number: {sequence[-1]}")
-        print(f"  Total length: {len(sequence)}")
-        print(f"  Current index: {shared_context.get('current_index', 'N/A')}")
+        logger.debug(f"\nFibonacci sequence details:")
+        logger.debug(f"  First few numbers: {sequence[:min(5, len(sequence))]}...")
+        logger.debug(f"  Last number: {sequence[-1]}")
+        logger.debug(f"  Total length: {len(sequence)}")
+        logger.debug(f"  Current index: {shared_context.get('current_index', 'N/A')}")
     else:
-        print("Warning: 'sequence' not found in shared context. Flow may not have executed correctly.")
+        logger.debug("Warning: 'sequence' not found in shared context. Flow may not have executed correctly.")
 
 
 @cli.command()
 def batch():
     """Run the Fibonacci batch processing demonstration"""
-    print("\n=== FIBONACCI BATCH PROCESSING DEMONSTRATION ===")
+    logger.debug("\n=== FIBONACCI BATCH PROCESSING DEMONSTRATION ===")
     batch_flow = create_fibonacci_batch_flow()
     
     start_time = time.time()
@@ -739,13 +754,13 @@ def batch():
     batch_flow.run(shared_context)
     end_time = time.time()
     
-    print(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
 
 
 @cli.command()
 def parallel():
     """Run the Fibonacci parallel processing demonstration"""
-    print("\n=== FIBONACCI PARALLEL PROCESSING DEMONSTRATION ===")
+    logger.debug("\n=== FIBONACCI PARALLEL PROCESSING DEMONSTRATION ===")
     parallel_flow = create_parallel_fibonacci_flow()
     
     start_time = time.time()
@@ -753,13 +768,13 @@ def parallel():
     parallel_flow.run(shared_context)
     end_time = time.time()
     
-    print(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
 
 
 @cli.command()
 def composite():
     """Run the composite Fibonacci flow demonstration"""
-    print("\n=== COMPOSITE FIBONACCI FLOW DEMONSTRATION ===")
+    logger.debug("\n=== COMPOSITE FIBONACCI FLOW DEMONSTRATION ===")
     composite_flow = create_composite_fibonacci_flow()
     
     start_time = time.time()
@@ -767,13 +782,13 @@ def composite():
     composite_flow.run(shared_context)
     end_time = time.time()
     
-    print(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
 
 
 @cli.command()
 def compare():
     """Compare different Fibonacci implementations"""
-    print("\n=== FIBONACCI IMPLEMENTATION COMPARISON ===")
+    logger.debug("\n=== FIBONACCI IMPLEMENTATION COMPARISON ===")
     
     limit = 30  # Use the same sequence length for fair comparison
     
@@ -786,7 +801,7 @@ def compare():
     
     flow_results = {}
     for name, flow in flow_implementations.items():
-        print(f"\nRunning {name}...")
+        logger.debug(f"\nRunning {name}...")
         shared_context = {}
         
         start_time = time.time()
@@ -795,7 +810,7 @@ def compare():
         
         execution_time = end_time - start_time
         flow_results[name] = execution_time
-        print(f"{name} execution time: {execution_time:.6f} seconds")
+        logger.debug(f"{name} execution time: {execution_time:.6f} seconds")
     
     # Test direct implementations
     direct_implementations = {
@@ -805,7 +820,7 @@ def compare():
     
     direct_results = {}
     for name, func in direct_implementations.items():
-        print(f"\nRunning {name}...")
+        logger.debug(f"\nRunning {name}...")
         
         start_time = time.time()
         func()
@@ -813,7 +828,7 @@ def compare():
         
         execution_time = end_time - start_time
         direct_results[name] = execution_time
-        print(f"{name} execution time: {execution_time:.6f} seconds")
+        logger.debug(f"{name} execution time: {execution_time:.6f} seconds")
     
     # Combine results
     all_results = {**flow_results, **direct_results}
@@ -821,27 +836,27 @@ def compare():
     # Find the fastest implementation
     fastest = min(all_results.items(), key=lambda x: x[1])
     
-    print("\n=== PERFORMANCE COMPARISON SUMMARY ===")
+    logger.debug("\n=== PERFORMANCE COMPARISON SUMMARY ===")
     for name, time_taken in all_results.items():
         speedup = time_taken / fastest[1]
-        print(f"{name}: {time_taken:.6f}s ({speedup:.2f}x slower than fastest)")
+        logger.debug(f"{name}: {time_taken:.6f}s ({speedup:.2f}x slower than fastest)")
     
-    print(f"\nFastest implementation: {fastest[0]} ({fastest[1]:.6f}s)")
+    logger.debug(f"\nFastest implementation: {fastest[0]} ({fastest[1]:.6f}s)")
     
     # Additional insights
-    print("\n=== IMPLEMENTATION INSIGHTS ===")
-    print("• Flow-based vs Direct: Flow adds framework overhead but provides structure")
-    print("• Sequential vs Parallel: Parallel shows advantage for larger workloads")
-    print("• Composite approach: Reusing previous calculations optimizes performance")
-    print("• Batch processing: Good for handling multiple similar tasks")
+    logger.debug("\n=== IMPLEMENTATION INSIGHTS ===")
+    logger.debug("• Flow-based vs Direct: Flow adds framework overhead but provides structure")
+    logger.debug("• Sequential vs Parallel: Parallel shows advantage for larger workloads")
+    logger.debug("• Composite approach: Reusing previous calculations optimizes performance")
+    logger.debug("• Batch processing: Good for handling multiple similar tasks")
     
     # Calculate average times by category
     flow_avg = sum(flow_results.values()) / len(flow_results)
     direct_avg = sum(direct_results.values()) / len(direct_results)
     
-    print(f"\nAverage times:")
-    print(f"• Flow-based implementations: {flow_avg:.6f}s")
-    print(f"• Direct implementations: {direct_avg:.6f}s")
+    logger.debug(f"\nAverage times:")
+    logger.debug(f"• Flow-based implementations: {flow_avg:.6f}s")
+    logger.debug(f"• Direct implementations: {direct_avg:.6f}s")
     
     # Return results for potential further analysis
     return all_results
@@ -860,7 +875,7 @@ python {file_name}  parallel-threaded  # Run parallel Fibonacci generation using
 
 python {file_name}  compare            Compare different Fibonacci implementations
     """
-    print(help_str)
+    logger.debug(help_str)
 
 if __name__ == "__main__":
     cli()
