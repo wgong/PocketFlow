@@ -24,6 +24,25 @@ from typing import Dict, List, Any, Optional, Union, Tuple
 from pathlib import Path
 import click
 
+from util_log import get_logger, set_log_level, configure_logging
+
+logger = get_logger("demo-zinets")
+
+LOG_LEVEL = "DEBUG"   # For detailed logging during development
+# # "WARNING"           # Or for minimal output in production
+# set_log_level(LOG_LEVEL)      
+
+LOG_FILE = Path(__file__).name + ".log"
+
+# Or completely customize the logging setup
+configure_logging(
+    level=LOG_LEVEL,
+    format_str='[%(asctime)s - %(name)s - %(levelname)s] %(message)s',
+    log_file=LOG_FILE  # Also log to a file
+)
+
+LINE_BREAK = 100*"="
+
 class BaseNode:
     """
     Base class for all nodes in the flow framework.
@@ -53,8 +72,6 @@ class BaseNode:
         Returns:
             The successor node for easy chaining
         """
-        if action in self.successors:
-            warnings.warn(f"Overwriting successor for action '{action}'")
         self.successors[action] = node
         return node
     
@@ -243,16 +260,20 @@ class BatchNode(Node):
     """
     
     def _exec(self, items):
-        """
-        Execute the node logic on each item in the batch.
+        """Execute the node logic on each item in the batch."""
+        logger.debug(f"BatchNode._exec received {len(items) if items else 0} items")
+        results = []
         
-        Args:
-            items: List of items to process
-            
-        Returns:
-            List of execution results
-        """
-        return [super(BatchNode, self)._exec(i) for i in (items or [])]
+        for item in (items or []):
+            try:
+                result = self.exec(item)
+                logger.debug(f"Processed batch item: {item.get('id', 'unknown')}, result: {result}")
+                results.append(result)
+            except Exception as e:
+                logger.debug(f"Error processing batch item: {e}")
+        
+        logger.debug(f"BatchNode._exec completed with {results} results")
+        return results
 
 
 class Flow(BaseNode):
@@ -296,10 +317,7 @@ class Flow(BaseNode):
         Returns:
             The next node or None if no successor exists
         """
-        nxt = curr.successors.get(action or "default")
-        if not nxt and curr.successors:
-            warnings.warn(f"Flow ends: '{action}' not found in {list(curr.successors)}")
-        return nxt
+        return curr.successors.get(action or "default")
     
     def _orch(self, shared, params=None):
         """
@@ -312,51 +330,79 @@ class Flow(BaseNode):
         Returns:
             The last action returned by the final node
         """
-        curr = copy.copy(self.start_node)
-        p = params or {**self.params}
+        curr = self.start_node  # Don't copy the node
+        p = params or self.params  # Just reference the params
         last_action = None
         
-        while curr:
-            curr.set_params(p)
-            last_action = curr._run(shared)
-            curr = copy.copy(self.get_next_node(curr, last_action))
+        logger.debug(f"Starting flow orchestration with node: {curr.__class__.__name__}")
         
+        while curr:
+            # Set parameters if needed
+            if params:
+                curr.set_params(p)
+                
+            # Run the current node
+            logger.debug(f"Running node: {curr.__class__.__name__}")
+            last_action = curr.run(shared)  # Use run instead of _run
+            logger.debug(f"Node returned action: {last_action}")
+            
+            # Get the next node
+            curr = self.get_next_node(curr, last_action)
+            if curr:
+                logger.debug(f"Next node: {curr.__class__.__name__}")
+        
+        logger.debug(f"Flow orchestration completed with action: {last_action}")
         return last_action
     
-    def _run(self, shared):
-        """Run the entire flow."""
-        p = self.prep(shared)
-        o = self._orch(shared)
-        return self.post(shared, p, o)
-    
-    def post(self, shared, prep_res, exec_res):
-        """Return the final result of the flow execution."""
-        return exec_res
+    def run(self, shared):
+        """Run the flow with the given shared context."""
+        # Check if this flow is configured for direct execution
+        if callable(getattr(self, 'exec', None)):
+            logger.debug("Using direct execution for flow")
+            p = self.prep(shared)
+            exec_result = self.exec(p)
+            return self.post(shared, p, exec_result)
+        
+        # Otherwise, use orchestration
+        logger.debug("Using orchestration for flow")
+        return self._orch(shared)
 
 
 class BatchFlow(Flow):
-    """
-    A flow that processes batches of parameters.
+    """A flow that processes batches of parameters."""
     
-    Executes the flow multiple times, once for each set of parameters.
-    """
-    
-    def _run(self, shared):
-        """
-        Run the flow for each set of parameters in the batch.
+    def run(self, shared):
+        """Run the flow for each set of parameters in the batch."""
+        # Prepare the batch items
+        batch_items = self.prep(shared) or []
+        logger.debug(f"BatchFlow.run prepared {len(batch_items)} batch items")
         
-        Args:
-            shared: Shared context data
+        if not batch_items:
+            logger.debug("Warning: No batch items to process")
+            return self.post(shared, batch_items, [])
+        
+        # Process the batch with the start node
+        if self.start_node:
+            logger.debug(f"Processing batch with start node: {self.start_node.__class__.__name__}")
             
-        Returns:
-            The result of post-processing
-        """
-        pr = self.prep(shared) or []
-        
-        for bp in pr:
-            self._orch(shared, {**self.params, **bp})
-        
-        return self.post(shared, pr, None)
+            # Set parameters and run the start node directly with the batch
+            self.start_node.set_params(self.params)
+            batch_results = self.start_node._exec(batch_items)
+            
+            logger.debug(f"Batch processing complete: {len(batch_results) if batch_results else 0} results")
+            
+            # Store the batch results in the shared context
+            shared["batch_results"] = batch_results
+            
+            # Let the start node handle post-processing if needed
+            action = self.start_node.post(shared, batch_items, batch_results)
+            logger.debug(f"Start node post-processing returned action: {action}")
+            
+            # Return the final results via post method
+            return self.post(shared, batch_items, batch_results)
+        else:
+            logger.debug("Error: No start node defined for batch flow")
+            return self.post(shared, batch_items, [])
 
 
 class AsyncNode(Node):
@@ -1075,21 +1121,6 @@ def all():
 
 
 @cli.command()
-def help_weighted_custom():
-    file_name = Path(__file__).name
-    help_str = f"""
-# Test only temperature-based selection at specific temperatures
-python {file_name} weighted-custom --mode temperature -t 0.0 -t 0.2 -t 0.5
-
-# Test only the intro proficiency level at different temperatures
-python {file_name} weighted-custom -l intro -t 0.0 -t 0.5 -t 1.0
-
-# Test just the binary selection modes
-python {file_name} weighted-custom --mode binary
-    """
-    print(help_str)
-
-@cli.command()
 @click.option('--mode', type=click.Choice(['binary', 'temperature', 'both']), default='both',
               help='Selection mode to test')
 @click.option('--temps', '-t', multiple=True, type=float, default=[0.0, 0.3, 0.7, 1.0],
@@ -1214,23 +1245,5 @@ def weighted_custom(mode, temps, levels):
 
 
 
-# Run all demonstrations
-def demo_all():
-    print("POCKET FLOW FRAMEWORK DEMONSTRATION")
-    print("===================================")
-    
-    # Run synchronous demos
-    demo_basic_flow()
-    demo_retry_mechanism()
-    demo_batch_processing()
-    demo_shared_context()
-    demo_weighted_connections()
-    
-    # Run async demo
-    asyncio.run(demo_async_flow())
-    
-    print("\nAll demonstrations completed successfully!")
-
 if __name__ == "__main__":
     cli()
-    # demo_all()

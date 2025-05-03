@@ -56,8 +56,9 @@ LINE_BREAK = 100*"="
 class BaseNode:
     """Base class for all nodes in the flow framework."""
     
-    def __init__(self):
+    def __init__(self, name=None):
         """Initialize a node with empty params and successors dictionaries."""
+        self.name = name
         self.params = {}
         self.successors = {}
     
@@ -108,9 +109,9 @@ class BaseNode:
 class Node(BaseNode):
     """Standard node with retry functionality."""
     
-    def __init__(self, max_retries=1, wait=0):
+    def __init__(self, name="node", max_retries=1, wait=0):
         """Initialize a node with retry capabilities."""
-        super().__init__()
+        super().__init__(name=name)
         self.max_retries = max_retries
         self.wait = wait
     
@@ -136,7 +137,9 @@ class BatchNode(Node):
     
     Applies the node's execution logic to each item in a batch.
     """
-    
+    def __init__(self, name="batch-node"):
+        super().__init__(name=name)
+
     def _exec(self, items):
         """Execute the node logic on each item in the batch."""
         logger.debug(f"BatchNode._exec received {len(items) if items else 0} items")
@@ -162,9 +165,9 @@ class Flow(BaseNode):
     Manages the flow of execution from a starting node through its successors.    
     """
     
-    def __init__(self, start=None):
+    def __init__(self, name="flow", start=None):
         """Initialize a flow with an optional starting node."""
-        super().__init__()
+        super().__init__(name=name)
         self.start_node = start
         self._is_direct_execution = False  # Flag to indicate if this flow uses direct execution
     
@@ -188,7 +191,7 @@ class Flow(BaseNode):
         p = params or self.params  # Just reference the params
         last_action = None
         
-        logger.debug(f"Starting flow orchestration with node: {curr.__class__.__name__}")
+        logger.debug(f"Starting flow orchestration with node: {curr.name}")
         
         while curr:  # traverse all connected nodes
             # Set parameters if needed
@@ -196,14 +199,14 @@ class Flow(BaseNode):
                 curr.set_params(p)
                 
             # Run the current node
-            logger.debug(f"Running node: {curr.__class__.__name__}")
+            logger.debug(f"Running node: {curr.name}")
             last_action = curr.run(shared)  # Use run instead of _run
             logger.debug(f"Node returned action: {last_action}")
             
             # Get the next node
             curr = self.get_next_node(curr, last_action)
             if curr:
-                logger.debug(f"Next node: {curr.__class__.__name__}")
+                logger.debug(f"Next node: {curr.name}")
         
         logger.debug(f"Flow orchestration completed with action: {last_action}")
         return last_action
@@ -223,7 +226,10 @@ class Flow(BaseNode):
     
 class BatchFlow(Flow):
     """A flow that processes batches of parameters."""
-    
+
+    def __init__(self, name="batch-flow", start=None):
+        super().__init__(name=name, start=start)
+
     def run(self, shared):
         """Run the flow for each set of parameters in the batch."""
         # Prepare the batch items
@@ -237,7 +243,7 @@ class BatchFlow(Flow):
         
         # Process the batch with the start node
         if self.start_node:
-            logger.debug(f"Processing batch with start node: {self.start_node.__class__.__name__}")
+            logger.debug(f"Processing batch with start node: {self.start_node.name}")
             
             # Set parameters and run the start node directly with the batch
             self.start_node.set_params(self.params)
@@ -264,7 +270,7 @@ def create_basic_fibonacci_flow(limit=10):
     """Create a flow for generating Fibonacci sequence."""
     
     # Create a node that will generate the Fibonacci sequence
-    fib_node = Node()
+    fib_node = Node("fib")
     
     def generate_exec(prep_res):
         """Generate the Fibonacci sequence."""
@@ -298,19 +304,17 @@ def create_basic_fibonacci_flow(limit=10):
     fib_node.post = generate_post
     
     # Create and return the flow
-    flow = Flow(start=fib_node)
+    flow = Flow(name="basic fib", start=fib_node)
     # Explicitly set the exec attribute to None to prevent direct execution
     flow.exec = None
     return flow
 
 def create_fibonacci_node():
     """Create a node that generates a Fibonacci sequence."""
-    
-    fib_node = BatchNode()
-    
+    LIMIT=10    
     def generate_fibonacci(params):
         """Generate Fibonacci sequence up to the specified limit."""
-        limit = params.get("limit", 10)
+        limit = params.get("limit", LIMIT)
         
         # Initialize the sequence
         sequence = [0, 1]
@@ -325,19 +329,18 @@ def create_fibonacci_node():
             "last_number": sequence[-1]
         }
     
+    fib_node = BatchNode(f"fib-{LIMIT}")   
     fib_node.exec = generate_fibonacci
     return fib_node
 
 def create_fibonacci_batch_flow():
     """Create a batch flow for generating multiple Fibonacci sequences."""
-    
-    # Create a batch processor node
-    fib_node = BatchNode()
+    LIMIT=10 
     
     # Define the execution function that processes a single batch item
     def fib_node_exec(params):
         """Generate Fibonacci sequence for a single batch item."""
-        limit = params.get("limit", 10)
+        limit = params.get("limit", LIMIT)
         logger.debug(f"Generating Fibonacci sequence with limit={limit}")
         
         # Initialize the sequence
@@ -363,11 +366,10 @@ def create_fibonacci_batch_flow():
         return "default"
     
     # Configure the batch node
+    # Create a batch processor node
+    fib_node = BatchNode("batch-fib")
     fib_node.exec = fib_node_exec   
     fib_node.post = fib_node_post
-    
-    # Create the batch flow
-    batch_flow = BatchFlow(start=fib_node)
     
     # Prepare batch parameters
     def prep_batch(shared):
@@ -404,17 +406,15 @@ def create_fibonacci_batch_flow():
         
         return "completed"
     
-    # Configure the flow
-    batch_flow.prep = prep_batch
-    batch_flow.post = post_batch
+    # Create / config the batch flow
+    flow = BatchFlow(name="batch fib flow", start=fib_node)   
+    flow.prep = prep_batch
+    flow.post = post_batch
     
-    return batch_flow
+    return flow
 
 def create_parallel_fibonacci_flow():
     """Create a flow for parallel processing of Fibonacci sequences."""
-    
-    # Create a custom flow for parallel processing
-    parallel_flow = Flow()
     
     def generate_fibonacci(limit):
         """Generate Fibonacci sequence up to the specified limit."""
@@ -464,17 +464,20 @@ def create_parallel_fibonacci_flow():
         
         return "completed"
     
+    # Create a custom flow for parallel processing
+    flow = Flow("parallel fib flow")
+    
     # Configure the flow
-    parallel_flow.prep = prep_parallel
-    parallel_flow.exec = exec_parallel
-    parallel_flow.post = post_parallel
+    flow.prep = prep_parallel
+    flow.exec = exec_parallel
+    flow.post = post_parallel
     
     # Configure for direct execution
-    parallel_flow.set_direct_execution()
+    flow.set_direct_execution()
     
-    return parallel_flow
+    return flow
 
-def parallel_fibonacci_with_threading(limits = [10, 30, 100]):
+def parallel_fibonacci_threaded(limits = [10, 30, 100]):
     """Direct implementation of parallel Fibonacci generation using ThreadPoolExecutor."""
     logger.debug(f"\n\n=== FIBONACCI PARALLEL PROCESSING DEMONSTRATION (WITH THREADING) ===\n{LINE_BREAK}")
     
@@ -579,7 +582,7 @@ def parallel_fibonacci(limits = [10, 30, 100]):
         logger.debug(f"  • Last number: {last_number}")
         logger.debug(f"  • Total numbers: {len(sequence)}")
 
-    logger.debug(f"\nTotal execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\nTotal completed in  {end_time - start_time:.4f} seconds")
 
     return results
 
@@ -594,15 +597,17 @@ def create_composite_fibonacci_flow():
     """
     
     # Create individual nodes for each sequence length
-    fib_node_10 = Node()
-    fib_node_30 = Node()
-    fib_node_100 = Node()
+    LIMITS = [10,30,100]
+
+    fib_node_10 = Node(f"fib-{LIMITS[0]}")
+    fib_node_30 = Node(f"fib-{LIMITS[1]}")
+    fib_node_100 = Node(f"fib-{LIMITS[2]}")
     
     # Node for limit=10 calculation
     def calculate_fib_10(prep_res):
         logger.debug("Calculating Fibonacci sequence with limit=10...")
         sequence = [0, 1]
-        while len(sequence) < 10:
+        while len(sequence) < LIMITS[0]:
             sequence.append(sequence[-1] + sequence[-2])
         return sequence
     
@@ -627,7 +632,7 @@ def create_composite_fibonacci_flow():
         
         # Continue from where we left off
         sequence = base_sequence.copy()
-        while len(sequence) < 30:
+        while len(sequence) < LIMITS[1]:
             sequence.append(sequence[-1] + sequence[-2])
         
         return sequence
@@ -660,7 +665,7 @@ def create_composite_fibonacci_flow():
         
         # Continue from where we left off
         sequence = base_sequence.copy()
-        while len(sequence) < 100:
+        while len(sequence) < LIMITS[2]:
             sequence.append(sequence[-1] + sequence[-2])
         
         return sequence
@@ -695,8 +700,8 @@ def create_composite_fibonacci_flow():
     fib_node_100.next(None, "done")  # Explicitly end flow
     
     # Create the flow
-    composite_flow = Flow(start=fib_node_10)
-    return composite_flow
+    flow = Flow(name="composite fib", start=fib_node_10)
+    return flow
 
 # ----- CLICK CLI COMMANDS -----
 
@@ -710,10 +715,10 @@ def parallel_threaded():
     """Run parallel Fibonacci generation using ThreadPoolExecutor"""
     logger.debug("Starting parallel Fibonacci generation with ThreadPoolExecutor...")
     start_time = time.time()
-    results = parallel_fibonacci_with_threading()
+    results = parallel_fibonacci_threaded()
     end_time = time.time()
     
-    logger.debug(f"\n parallel_threaded execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\n parallel_threaded completed in  {end_time - start_time:.4f} seconds")
     return results
 
 # cli.add_command(parallel_threaded)
@@ -726,15 +731,16 @@ def parallel_direct():
     results = parallel_fibonacci()
     end_time = time.time()
     
-    logger.debug(f"\n parallel_direct execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\n parallel_direct completed in  {end_time - start_time:.4f} seconds")
     return results
 
 @cli.command()
 @click.option('--limit', '-l', default=10, help='Number of Fibonacci numbers to generate')
 def basic(limit):
     """Run the basic Fibonacci flow with iteration"""
-    logger.debug(f"\n\n=== BASIC FIBONACCI FLOW DEMONSTRATION ===\n{LINE_BREAK}")
     flow = create_basic_fibonacci_flow(limit=limit)
+    flow_name = flow.name
+    logger.debug(f"\n\n=== '{flow_name}' FLOW DEMONSTRATION ===\n{LINE_BREAK}")
     
     start_time = time.time()
     shared_context = {}
@@ -743,13 +749,10 @@ def basic(limit):
     flow.run(shared_context)
     end_time = time.time()
     
-    logger.debug(f"\n basic execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\n '{flow_name}' completed in  {end_time - start_time:.4f} seconds")
 
     # Print the final shared context
-    logger.debug("\nFinal shared context:")
-    logger.debug(shared_context)
-    
-    # Access specific values for the basic flow
+    logger.debug(f"\nFinal shared context:\n {shared_context}")   
     if "sequence" in shared_context:
         sequence = shared_context["sequence"]
         logger.debug(f"\nFibonacci sequence details:")
@@ -764,43 +767,46 @@ def basic(limit):
 @cli.command()
 def batch():
     """Run the Fibonacci batch processing demonstration"""
-    logger.debug(f"\n\n=== FIBONACCI BATCH PROCESSING DEMONSTRATION ===\n{LINE_BREAK}")
-    batch_flow = create_fibonacci_batch_flow()
-    
+    flow = create_fibonacci_batch_flow()
+    flow_name = flow.name
+    logger.debug(f"\n\n=== {flow_name} DEMONSTRATION ===\n{LINE_BREAK}")
+
     start_time = time.time()
     shared_context = {}
-    batch_flow.run(shared_context)
+    flow.run(shared_context)
     end_time = time.time()
     
-    logger.debug(f"\n batch execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\n {flow_name} completed in  {end_time - start_time:.4f} seconds")
 
 
 @cli.command()
 def parallel():
     """Run the Fibonacci parallel processing demonstration"""
-    logger.debug(f"\n\n=== FIBONACCI PARALLEL PROCESSING DEMONSTRATION ===\n{LINE_BREAK}")
-    parallel_flow = create_parallel_fibonacci_flow()
+    flow = create_parallel_fibonacci_flow()
+    flow_name = flow.name
+    logger.debug(f"\n\n=== {flow_name} DEMONSTRATION ===\n{LINE_BREAK}")
     
     start_time = time.time()
     shared_context = {}
-    parallel_flow.run(shared_context)
+    flow.run(shared_context)
     end_time = time.time()
     
-    logger.debug(f"\n paralle execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\n {flow_name} completed in  {end_time - start_time:.4f} seconds")
 
 
 @cli.command()
 def composite():
     """Run the composite Fibonacci flow demonstration"""
-    logger.debug(f"\n\n=== COMPOSITE FIBONACCI FLOW DEMONSTRATION ===\n{LINE_BREAK}")
-    composite_flow = create_composite_fibonacci_flow()
-    
+    flow = create_composite_fibonacci_flow()
+    flow_name = flow.name 
+    logger.debug(f"\n\n=== {flow_name} DEMONSTRATION ===\n{LINE_BREAK}")
+
     start_time = time.time()
     shared_context = {}
-    composite_flow.run(shared_context)
+    flow.run(shared_context)
     end_time = time.time()
     
-    logger.debug(f"\n composite execution time: {end_time - start_time:.4f} seconds")
+    logger.debug(f"\n {flow_name} completed in  {end_time - start_time:.4f} seconds")
 
 
 @cli.command()
@@ -828,26 +834,26 @@ def compare():
         
         execution_time = end_time - start_time
         flow_results[name] = execution_time
-        logger.debug(f" {name} execution time: {execution_time:.6f} seconds")
+        logger.debug(f" {name} completed in  {execution_time:.6f} seconds")
     
     # Test direct implementations
     limits = [10, 30, 100]
     direct_implementations = {
         "Direct Sequential": lambda: parallel_fibonacci(limits=limits),
-        "Direct Parallel": lambda: parallel_fibonacci_with_threading(limits=limits)
+        "Direct Parallel": lambda: parallel_fibonacci_threaded(limits=limits)
     }
     
     direct_results = {}
-    for name, func in direct_implementations.items():
+    for name, func_ in direct_implementations.items():
         logger.debug(f"\nRunning {name}...")
         
         start_time = time.time()
-        func()
+        func_()
         end_time = time.time()
         
         execution_time = end_time - start_time
         direct_results[name] = execution_time
-        logger.debug(f" {name} execution time: {execution_time:.6f} seconds")
+        logger.debug(f" {name} completed in  {execution_time:.6f} seconds")
     
     # Combine results
     all_results = {**flow_results, **direct_results}
