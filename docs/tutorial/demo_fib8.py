@@ -101,9 +101,15 @@ class BaseNode:
         """Public method to run this node."""
         return self._run(shared)
     
-    def __rshift__(self, other):
-        """Override >> operator for creating node connections."""
-        return self.next(other)
+    def __rshift__(self, other_node):
+        """Override >> operator for creating node connections.
+        
+        Limitation:
+        
+        To specify a different action, call explicitly as:
+            node1.next(node2, action="custom_action")
+        """
+        return self.next(other_node)
 
 
 class Node(BaseNode):
