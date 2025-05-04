@@ -1,6 +1,8 @@
 from pocketflow import Node, Flow
 from utils import call_llm
 
+NUM_MSG = 2
+
 class ChatNode(Node):
     def prep(self, shared):
         # Initialize messages if this is the first run
@@ -8,23 +10,27 @@ class ChatNode(Node):
             shared["messages"] = []
             print("Welcome to the chat! Type 'exit' to end the conversation.")
         
+        num_msg = shared.get("num_msg", (2*NUM_MSG+1))
         # Get user input
         user_input = input("\nYou: ")
         
         # Check if user wants to exit
-        if user_input.lower() == 'exit':
+        if user_input.lower() in ['exit', 'bye', 'quit']:
             return None
         
         # Add user message to history
         shared["messages"].append({"role": "user", "content": user_input})
         
         # Return all messages for the LLM
-        return shared["messages"]
+        return shared["messages"][-num_msg:]
 
     def exec(self, messages):
         if messages is None:
             return None
         
+        msg = "\n\t".join([str(m) for m in messages])
+        print(f"""[messages]\n\t{msg}""")
+
         # Call LLM with the entire conversation history
         response = call_llm(messages)
         return response
@@ -51,5 +57,5 @@ flow = Flow(start=chat_node)
 
 # Start the chat
 if __name__ == "__main__":
-    shared = {}
+    shared = {"num_msg" : (2*NUM_MSG+1)}
     flow.run(shared)

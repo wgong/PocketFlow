@@ -4,7 +4,7 @@ from flow import create_agent_flow
 def main():
     """Simple function to process a question."""
     # Default question
-    default_question = "Who won the Nobel Prize in Physics 2024?"
+    default_question = "chinese characters a new exploration from simplification to deeper understanding" # "Who won the Nobel Prize in Physics 2024?"
     
     # Get question from command line if provided with --
     question = default_question
