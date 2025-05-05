@@ -1,6 +1,6 @@
 import re
 from pocketflow import Node, BatchNode
-from utils import call_llm
+from utils import call_llm, write_file
 import yaml
 
 class GenerateOutline(Node):
@@ -89,7 +89,9 @@ Requirements:
             print(content)
             print()
         print("===========================\n")
-        
+
+        write_file(topic=shared["topic"], content=shared["draft"], style="draft", out_dir="output")
+
         return "default"
 
 class ApplyStyle(Node):
@@ -124,4 +126,6 @@ class ApplyStyle(Node):
         print("\n===== FINAL ARTICLE =====\n")
         print(exec_res)
         print("\n========================\n")
+
+        write_file(topic=shared["topic"], content=shared["final_article"], style="final", out_dir="output")
         return "default" 
