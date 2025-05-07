@@ -71,6 +71,29 @@ flowchart TD
 
 This setup allows for a decoupled workflow logic (PocketFlow) and web interaction layer (FastAPI), with efficient real-time updates pushed to the user.
 
+
+### Additional Notes by [Claude](https://claude.ai/chat/39b054e3-3272-4ea1-b049-6ece7a0dea8f)
+
+To summarize the key interactions:
+
+1. **HTTP for Standard Requests**:
+   - Frontend submits text via HTTP POST to `/submit`
+   - Backend processes this request and returns a task ID
+   - Frontend sends approve/reject feedback via HTTP POST to `/feedback/{task_id}`
+
+2. **SSE for Real-time Updates**:
+   - Frontend establishes a persistent connection to `/stream/{task_id}`
+   - Backend pushes status updates through this connection
+   - Updates flow one-way from server to client
+   - Each browser gets only the updates for tasks it's connected to
+
+This separation of concerns works well:
+- HTTP for commands and actions (submit, feedback)
+- SSE for status updates and notifications
+
+The combination creates an interactive application that can handle long-running processes while keeping the user informed and involved throughout the workflow. The human-in-the-loop design pattern is particularly valuable for applications where automated processing needs human verification or quality control.
+
+
 ## Files
 
 -   [`server.py`](./server.py): The main FastAPI application handling HTTP requests, SSE, state management, and background task scheduling.
