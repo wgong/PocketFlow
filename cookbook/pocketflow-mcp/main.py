@@ -121,10 +121,9 @@ if __name__ == "__main__":
     
     # Get question from command line if provided with --
     question = default_question
-    for arg in sys.argv[1:]:
-        if arg.startswith("--"):
-            question = arg[2:]
-            break
+    # print(sys.argv)
+    if len(sys.argv) > 1:
+        question = sys.argv[1]
     
     print(f"🤔 Processing question: {question}")
     

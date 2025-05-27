@@ -26,6 +26,13 @@ def divide(a: int, b: int) -> float:
         raise ValueError("Division by zero is not allowed")
     return a / b
 
+@mcp.tool()
+def power(base: int, exp: int) -> int:
+    """Calculate base a to exponent b"""
+    if base == 0:
+        raise ValueError("base zero is not allowed")
+    return pow(base, exp)
+
 # Start the server
 if __name__ == "__main__":
     mcp.run()

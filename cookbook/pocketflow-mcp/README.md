@@ -65,3 +65,18 @@ The agent uses PocketFlow to create a workflow where:
 - [`main.py`](./main.py): Implementation of the addition agent using PocketFlow
 - [`utils.py`](./utils.py): Helper functions for API calls and MCP integration
 - [`simple_server.py`](./simple_server.py): MCP server that provides the addition tool
+
+
+## Issues:
+### add tool
+
+```python
+@mcp.tool()
+def power(base: int, exp: int) -> int:
+    """Calculate base a to exponent b"""
+    if base == 0:
+        raise ValueError("base zero is not allowed")
+    return pow(base, exp)
+```
+
+It failed for "power of 2 to 3"
