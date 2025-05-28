@@ -28,7 +28,7 @@ def divide(a: int, b: int) -> float:
 
 @mcp.tool()
 def power(base: int, exp: int) -> int:
-    """Calculate base a to exponent b"""
+    """Calculate base to exponent"""
     if base == 0:
         raise ValueError("base zero is not allowed")
     return pow(base, exp)

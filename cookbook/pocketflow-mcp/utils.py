@@ -5,7 +5,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 # Global flag to control whether to use MCP or local implementation
-MCP = False
+MCP = True
 
 def call_llm(prompt):    
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", "your-api-key"))
@@ -168,6 +168,7 @@ if __name__ == "__main__":
         # Find available tools
     print("=== Finding available tools ===")
     tools = get_tools("simple_server.py")
+    print(f"TOOLS: {tools}")
     
     # Print tool information nicely formatted
     for i, tool in enumerate(tools, 1):
