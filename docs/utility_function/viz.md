@@ -89,6 +89,8 @@ graph LR
     end
 ```
 
+For visualization based on d3.js, check out [the cookbook](https://github.com/The-Pocket/PocketFlow/tree/main/cookbook/pocketflow-visualization).
+
 ## 2. Call Stack Debugging
 
 It would be useful to print the Node call stacks for debugging. This can be achieved by inspecting the runtime call stack:
@@ -138,3 +140,5 @@ data_science_flow.run({})
 ```
 
 The output would be: `Call stack: ['EvaluateModelNode', 'ModelFlow', 'DataScienceFlow']`
+
+For a more complete implementation, check out [the cookbook](https://github.com/The-Pocket/PocketFlow/tree/main/cookbook/pocketflow-tracing).
