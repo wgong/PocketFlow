@@ -1,16 +1,15 @@
+import click
 from flow import flow
 
+
+@click.command()
 def main():
-    print("\nWelcome to Text Converter!")
-    print("=========================")
-    
-    # Initialize shared store
-    shared = {}
-    
-    # Run the flow
-    flow.run(shared)
-    
-    print("\nThank you for using Text Converter!")
+    """Text Converter — demonstrates a basic PocketFlow pipeline."""
+    click.echo("\nWelcome to Text Converter!")
+    click.echo("=========================")
+    flow.run({})
+    click.echo("\nThank you for using Text Converter!")
+
 
 if __name__ == "__main__":
-    main() 
+    main()

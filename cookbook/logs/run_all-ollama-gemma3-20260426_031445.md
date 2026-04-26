@@ -1,0 +1,125 @@
+
+============================================================
+PocketFlow Cookbook — 52 recipe(s)  [20260426_031445]
+Adapter: ollama  Model: gemma3
+============================================================
+
+[01] 01-pocketflow-a2a
+     | /home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-a2a/utils.py:24: RuntimeWarning: This package (`duckduckgo_search`) has been renamed to `ddgs`! Use `pip install ddgs` instead.
+     |   results = DDGS().text(query, max_results=5)
+     | 🤔 Processing question: Who won the Nobel Prize in Physics 2024?
+     | 🤔 Agent deciding what to do next...
+     | 🔍 Agent decided to search for: Nobel Prize in Physics 2024 winner
+     | 🌐 Searching the web for: Nobel Prize in Physics 2024 winner
+     | 📚 Found information, analyzing results...
+     | 🤔 Agent deciding what to do next...
+     | Traceback (most recent call last):
+     |   File "/home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-a2a/main.py", line 27, in <module>
+     |     main()
+     |   File "/home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-a2a/main.py", line 22, in main
+     |     agent_flow.run(shared)
+     |   File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 16, in run
+     |     return self._run(shared)
+     |            ^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 50, in _run
+     |     def _run(self,shared): p=self.prep(shared); o=self._orch(shared); return self.post(shared,p,o)
+     |                                                   ^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 48, in _orch
+     |     while curr: curr.set_params(p); last_action=curr._run(shared); curr=copy.copy(self.get_next_node(curr,last_action))
+     |                                                 ^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 13, in _run
+     |     def _run(self,shared): p=self.prep(shared); e=self._exec(p); return self.post(shared,p,e)
+     |                                                   ^^^^^^^^^^^^^
+     |   File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 33, in _exec
+     |     if self.cur_retry==self.max_retries-1: return self.exec_fallback(prep_res,e)
+     |                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 28, in exec_fallback
+     |     def exec_fallback(self,prep_res,exc): raise exc
+     |                                           ^^^^^^^^^
+     |   File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 31, in _exec
+     |     try: return self.exec(prep_res)
+     |                 ^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-a2a/nodes.py", line 62, in exec
+     |     decision = yaml.safe_load(yaml_str)
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/__init__.py", line 125, in safe_load
+     |     return load(stream, SafeLoader)
+     |            ^^^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/__init__.py", line 81, in load
+     |     return loader.get_single_data()
+     |            ^^^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/constructor.py", line 49, in get_single_data
+     |     node = self.get_single_node()
+     |            ^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/composer.py", line 36, in get_single_node
+     |     document = self.compose_document()
+     |                ^^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/composer.py", line 55, in compose_document
+     |     node = self.compose_node(None, None)
+     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/composer.py", line 84, in compose_node
+     |     node = self.compose_mapping_node(anchor)
+     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/composer.py", line 127, in compose_mapping_node
+     |     while not self.check_event(MappingEndEvent):
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/parser.py", line 98, in check_event
+     |     self.current_event = self.state()
+     |                          ^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/parser.py", line 428, in parse_block_mapping_key
+     |     if self.check_token(KeyToken):
+     |        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/scanner.py", line 115, in check_token
+     |     while self.need_more_tokens():
+     |           ^^^^^^^^^^^^^^^^^^^^^^^
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/scanner.py", line 152, in need_more_tokens
+     |     self.stale_possible_simple_keys()
+     |   File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/yaml/scanner.py", line 291, in stale_possible_simple_keys
+     |     raise ScannerError("while scanning a simple key", key.mark,
+     | yaml.scanner.ScannerError: while scanning a simple key
+     |   in "<unicode string>", line 2, column 1:
+     |     I need to find out who won the N ...
+     |     ^
+     | could not find expected ':'
+     |   in "<unicode string>", line 3, column 1:
+     |     action: search
+     |     ^
+[01] FAILED  (5.4s)  log: 01_pocketflow-a2a_20260426_031445.md
+
+[02] 02-pocketflow-agent
+     | Traceback (most recent call last):
+     |   File "/home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-agent/main.py", line 2, in <module>
+     |     from flow import create_agent_flow
+     |   File "/home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-agent/flow.py", line 2, in <module>
+     |     from nodes import DecideAction, SearchWeb, AnswerQuestion
+     |   File "/home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-agent/nodes.py", line 2, in <module>
+     |     from utils import call_llm, search_web_duckduckgo
+     |   File "/home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-agent/utils.py", line 3, in <module>
+     |     from ddgs import DDGS
+     | ModuleNotFoundError: No module named 'ddgs'
+[02] FAILED  (1.0s)  log: 02_pocketflow-agent_20260426_031445.md
+
+[03] 03-pocketflow-agent-skills
+     | 🧩 Task: Summarize this launch plan for a VP audience
+     | 
+     | === Skill Used ===
+     | executive_brief
+     | 
+     | === Output ===
+     | Okay, please provide the launch plan you would like me to summarize for a VP audience. I'm ready when you are.
+[03] SUCCESS  (2.1s)  log: 03_pocketflow-agent-skills_20260426_031445.md
+
+[04] 04-pocketflow-agentic-rag
+     | 🤔 Question: How do nodes work in PocketFlow?
+     | 
+     |   🔍 Agent decides to read 'nodes'
+     |   📄 Reading document: nodes
+     |   ✅ Added 'nodes' to context
+     |   💡 Agent decides it has enough context to answer
+     |   ✍️ Generating answer...
+     | 
+     | 🎯 Final Answer:
+     | Nodes in PocketFlow consist of three phases: prep (reads shared store), exec (performs LLM calls), and post (writes results back). Only the exec node retries on failure, and BatchNode handles lists.
+[04] SUCCESS  (3.2s)  log: 04_pocketflow-agentic-rag_20260426_031445.md
+
+[05] 05-pocketflow-async-basic

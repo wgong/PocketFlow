@@ -1,27 +1,24 @@
-import sys
+import click
 from flow import create_agent_flow
 
-def main():
-    """Simple function to process a question."""
-    # Default question
-    default_question = "Who won the Nobel Prize in Physics 2024?"
-    
-    # Get question from command line if provided with --
-    question = default_question
-    for arg in sys.argv[1:]:
-        if arg.startswith("--"):
-            question = arg[2:]
-            break
-    
-    # Create the agent flow
-    agent_flow = create_agent_flow()
-    
-    # Process the question
+
+@click.command()
+@click.option("--question", default="Who won the Nobel Prize in Physics 2024?",
+              show_default=True, help="Question for the A2A agent to answer")
+@click.option("--out", default=None, help="File path to save the answer (e.g. output/answer.md)")
+def main(question, out):
     shared = {"question": question}
-    print(f"🤔 Processing question: {question}")
-    agent_flow.run(shared)
-    print("\n🎯 Final Answer:")
-    print(shared.get("answer", "No answer found"))
+    click.echo(f"🤔 Processing question: {question}")
+    create_agent_flow().run(shared)
+    answer = shared.get("answer", "No answer found")
+    click.echo("\n🎯 Final Answer:")
+    click.echo(answer)
+    if out:
+        from pathlib import Path
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        Path(out).write_text(f"Q: {question}\nA: {answer}\n", encoding="utf-8")
+        click.echo(f"\n✅ Saved to: {out}")
+
 
 if __name__ == "__main__":
     main()

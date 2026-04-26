@@ -1,28 +1,24 @@
-import sys
+import click
 from flow import create_agentic_rag_flow
 
-def main():
-    """Run the agentic RAG example."""
-    # Default question
-    default_question = "How do nodes work in PocketFlow?"
 
-    # Get question from command line if provided with --
-    question = default_question
-    for arg in sys.argv[1:]:
-        if arg.startswith("--"):
-            question = arg[2:]
-            break
-
-    # Create the flow
-    flow = create_agentic_rag_flow()
-
-    # Run with shared store
+@click.command()
+@click.option("--question", default="How do nodes work in PocketFlow?",
+              show_default=True, help="Question to answer using agentic RAG")
+@click.option("--out", default=None, help="File path to save the answer (e.g. output/answer.md)")
+def main(question, out):
     shared = {"question": question}
-    print(f"🤔 Question: {question}\n")
-    flow.run(shared)
+    click.echo(f"🤔 Question: {question}\n")
+    create_agentic_rag_flow().run(shared)
+    answer = shared.get("answer", "No answer generated.")
+    click.echo("\n🎯 Final Answer:")
+    click.echo(answer)
+    if out:
+        from pathlib import Path
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        Path(out).write_text(f"Q: {question}\nA: {answer}\n", encoding="utf-8")
+        click.echo(f"\n✅ Saved to: {out}")
 
-    print(f"\n🎯 Final Answer:")
-    print(shared.get("answer", "No answer generated."))
 
 if __name__ == "__main__":
     main()

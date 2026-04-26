@@ -1,37 +1,30 @@
-import sys
+import click
 from flow import create_debate_flow
 
-def main():
-    # Default claim
-    default_claim = "Remote work is more productive than office work"
 
-    # Get claim from command line if provided with --
-    claim = default_claim
-    for arg in sys.argv[1:]:
-        if arg.startswith("--"):
-            claim = arg[2:]
-            break
+@click.command()
+@click.option("--claim", default="Remote work is more productive than office work",
+              show_default=True, help="Claim to debate")
+@click.option("--out", default=None, help="File path to save the debate summary (e.g. output/debate.md)")
+def main(claim, out):
+    click.echo(f'🤔 Debating claim: "{claim}"')
+    shared = {"claim": claim}
+    create_debate_flow().run(shared)
 
-    print(f"🤔 Debating claim: \"{claim}\"")
+    summary = (
+        f"=== Debate Summary ===\n"
+        f"Claim:   {shared['claim']}\n"
+        f"Winner:  {shared.get('winner', 'N/A')}\n"
+        f"Scores:  FOR {shared.get('score_for','N/A')}/10 | AGAINST {shared.get('score_against','N/A')}/10\n"
+        f"Verdict: {shared.get('verdict', 'N/A')}\n"
+    )
+    click.echo(f"\n{summary}")
+    if out:
+        from pathlib import Path
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        Path(out).write_text(summary, encoding="utf-8")
+        click.echo(f"✅ Saved to: {out}")
 
-    # Create the flow
-    debate_flow = create_debate_flow()
-
-    # Set up shared state
-    shared = {
-        "claim": claim
-    }
-
-    # Run the flow
-    debate_flow.run(shared)
-
-    # Print final summary
-    print(f"\n=== Debate Summary ===")
-    print(f"📋 Claim: \"{shared['claim']}\"")
-    print(f"🏆 Winner: {shared.get('winner', 'N/A')}")
-    print(f"📊 Scores - FOR: {shared.get('score_for', 'N/A')}/10 | AGAINST: {shared.get('score_against', 'N/A')}/10")
-    print(f"⚖️  Verdict: {shared.get('verdict', 'N/A')}")
-    print("======================")
 
 if __name__ == "__main__":
     main()

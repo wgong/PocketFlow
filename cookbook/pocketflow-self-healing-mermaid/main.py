@@ -1,48 +1,42 @@
-import sys
+import click
+from pathlib import Path
 from flow import create_mermaid_flow
 
-def main():
-    """Runs the PocketFlow Self-Healing Mermaid Diagram Generator."""
-    print("🎨 PocketFlow Self-Healing Mermaid Generator\n")
+DEFAULT_TASK = (
+    "A flowchart showing a CI/CD pipeline: code push triggers build, "
+    "then parallel test and lint, then deploy to staging, "
+    "manual approval, deploy to production"
+)
 
-    # Default task
-    default_task = "A flowchart showing a CI/CD pipeline: code push triggers build, then parallel test and lint, then deploy to staging, manual approval, deploy to production"
 
-    # Get task from command line if provided with --
-    task = default_task
-    for arg in sys.argv[1:]:
-        if arg.startswith("--"):
-            task = arg[2:]
-            break
+@click.command()
+@click.option("--task", default=DEFAULT_TASK, show_default=False,
+              help="Description of the Mermaid diagram to generate")
+@click.option("--out", default="output/diagram.md", show_default=True,
+              help="File path to save the Mermaid code")
+def main(task, out):
+    click.echo("🎨 PocketFlow Self-Healing Mermaid Generator\n")
+    click.echo(f"🤔 Task: {task}\n")
+    shared = {"task": task}
+    create_mermaid_flow().run(shared)
 
-    print(f"🤔 Task: {task}\n")
-
-    # Set up shared state
-    shared = {
-        "task": task,
-    }
-
-    # Create and run the flow
-    flow = create_mermaid_flow()
-    flow.run(shared)
-
-    # Print final result
-    print("\n=== Result ===")
-    if "chart" in shared:
+    click.echo("\n=== Result ===")
+    chart = shared.get("chart", "")
+    if chart:
         attempts = shared.get("attempts", [])
         if attempts and len(attempts) >= 3:
-            print(f"  Status: FAILED after {len(attempts)} attempts")
-            print(f"  Last error: {attempts[-1]['error'][:200]}")
+            click.echo(f"  Status: FAILED after {len(attempts)} attempts")
+            click.echo(f"  Last error: {attempts[-1]['error'][:200]}")
         else:
-            retries = len(attempts)
-            if retries > 0:
-                print(f"  Status: SUCCESS (after {retries} retry/retries)")
-            else:
-                print("  Status: SUCCESS (first attempt)")
-        print(f"\n  Mermaid code:\n")
-        for line in shared["chart"].split("\n"):
-            print(f"    {line}")
-        print()
+            n = len(attempts)
+            click.echo(f"  Status: SUCCESS{'  (first attempt)' if n == 0 else f'  (after {n} retr{\"y\" if n==1 else \"ies\"})'}")
+        click.echo("\n  Mermaid code:\n")
+        for line in chart.split("\n"):
+            click.echo(f"    {line}")
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        Path(out).write_text(chart, encoding="utf-8")
+        click.echo(f"\n✅ Saved to: {out}")
+
 
 if __name__ == "__main__":
     main()

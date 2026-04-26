@@ -1,16 +1,26 @@
 import os
 from openai import OpenAI
 
+import sys
+from pathlib import Path
+# [SPL-SHIM-ON]
+# SPL shim: set SPL_ADAPTER (ollama|claude_cli) and SPL_MODEL env vars
+# Revert: change 'if False' back to 'if True' in the block below
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] if Path(__file__).resolve().parent.name == 'utils' else Path(__file__).resolve().parents[1]))
+from call_llm_shim import call_llm
+# [SPL-SHIM-OFF]
+
 # No need for dotenv if using system environment variables
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def call_llm(prompt):    
-    r = client.chat.completions.create(
-        model="gpt-4o",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return r.choices[0].message.content
-    
+if False:  # [SPL-SHIM] original — revert: change to 'if True'
+    def call_llm(prompt):    
+        r = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return r.choices[0].message.content
+        
 if __name__ == "__main__":
     prompt = "What is the meaning of life?"
     print(call_llm(prompt)) 

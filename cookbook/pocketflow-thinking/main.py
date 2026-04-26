@@ -1,33 +1,33 @@
-import sys
+import click
 from flow import create_chain_of_thought_flow
 
-def main():
-    # Default question
-    default_question = "You keep rolling a fair die until you roll three, four, five in that order consecutively on three rolls. What is the probability that you roll the die an odd number of times?"
-    
-    # Get question from command line if provided with --
-    question = default_question
-    for arg in sys.argv[1:]:
-        if arg.startswith("--"):
-            question = arg[2:]
-            break
-    
-    print(f"🤔 Processing question: {question}")   
+DEFAULT_QUESTION = (
+    "You keep rolling a fair die until you roll three, four, five in that order "
+    "consecutively on three rolls. What is the probability that you roll the die "
+    "an odd number of times?"
+)
 
-    # Create the flow
-    cot_flow = create_chain_of_thought_flow()
 
-    # Set up shared state
+@click.command()
+@click.option("--question", default=DEFAULT_QUESTION, show_default=False,
+              help="Reasoning problem to solve (default: dice probability puzzle)")
+@click.option("--out", default=None, help="File path to save the solution (e.g. output/solution.md)")
+def main(question, out):
+    click.echo(f"🤔 Processing question: {question}")
     shared = {
         "problem": question,
         "thoughts": [],
         "current_thought_number": 0,
         "total_thoughts_estimate": 10,
-        "solution": None
+        "solution": None,
     }
-    
-    # Run the flow
-    cot_flow.run(shared)
-    
+    create_chain_of_thought_flow().run(shared)
+    if out and shared.get("solution"):
+        from pathlib import Path
+        Path(out).parent.mkdir(parents=True, exist_ok=True)
+        Path(out).write_text(f"Q: {question}\n\n{shared['solution']}\n", encoding="utf-8")
+        click.echo(f"\n✅ Saved to: {out}")
+
+
 if __name__ == "__main__":
     main()

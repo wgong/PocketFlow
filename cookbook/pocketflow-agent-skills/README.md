@@ -24,20 +24,50 @@ graph TD
 
 ```bash
 pip install -r requirements.txt
-export OPENAI_API_KEY="your-key"
-python main.py --"Summarize this launch plan for a VP audience"
+
+# Use SPL shim (no OpenAI key needed)
+export SPL_ADAPTER=ollama   # or claude_cli
+export SPL_MODEL=gemma3     # or claude-sonnet-4-6
 ```
 
-Try another task:
+### Basic usage
 
 ```bash
-python main.py --"Turn this into an implementation checklist"
+cd ./cookbook/pocketflow-agent-skills
+
+# brief style
+SPL_ADAPTER=ollama SPL_MODEL=gemma3 \
+python main.py --task "Summarize this learning Chinese blog for business executive" \
+    --text "data/learn-chinese.md" \
+    --out "output/learn-chinese-brief.md"
+
+SPL_ADAPTER=claude_cli \
+python main.py --task "Summarize this blog" \
+    --text "data/llama-cpp-vs-ollama.md" \
+    --out "output/get-started-with-adopt-llama-cpp.md"
+
+# Checklist style
+SPL_ADAPTER=claude_cli \
+python main.py --task "Turn this blog into checklist" \
+    --text "data/llama-cpp-vs-ollama.md" \
+    --out "output/adopt-llama-cpp-checklist.md"
+
+
 ```
+
+### Options
+
+| Option | Default | Description |
+|---|---|---|
+| `--task` | `"Summarize this text for a VP audience"` | What to do with the text |
+| `--text` | _(none)_ | Literal text string **or** path to a `.md` / `.txt` file |
+| `--out`  | _(stdout)_ | File path to save the output |
 
 ## Files
 
-- `main.py` — CLI entry
+- `main.py` — Click CLI entry point
 - `flow.py` — graph wiring
 - `nodes.py` — skill selection + execution nodes
 - `utils.py` — load skills + LLM helper
 - `skills/*.md` — reusable Agent Skills
+- `data/` — sample input documents for testing

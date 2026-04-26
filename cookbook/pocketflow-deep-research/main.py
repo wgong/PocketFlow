@@ -1,27 +1,26 @@
-import sys
+import click
+from pathlib import Path
 from flow import create_deep_research_flow
 
-def main():
-    """Run the deep research flow on a given topic."""
-    # Default topic
-    default_topic = "The current state of quantum computing in 2025"
 
-    # Get topic from command line if provided with --
-    topic = default_topic
-    for arg in sys.argv[1:]:
-        if arg.startswith("--"):
-            topic = arg[2:]
-            break
-
-    # Create and run the flow
-    flow = create_deep_research_flow()
-
+@click.command()
+@click.option("--topic", default="The current state of quantum computing in 2025",
+              show_default=True, help="Topic to research")
+@click.option("--out", default="output/report.md", show_default=True,
+              help="File path to save the research report")
+def main(topic, out):
     shared = {"topic": topic}
-    print(f"🤔 Researching: {topic}\n")
-    flow.run(shared)
+    click.echo(f"🤔 Researching: {topic}\n")
+    create_deep_research_flow().run(shared)
 
-    print("\n📄 Final Report:\n")
-    print(shared.get("report", "No report generated."))
+    report = shared.get("report", "No report generated.")
+    click.echo("\n📄 Final Report:\n")
+    click.echo(report)
+
+    Path(out).parent.mkdir(parents=True, exist_ok=True)
+    Path(out).write_text(report, encoding="utf-8")
+    click.echo(f"\n✅ Saved to: {out}")
+
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,52 @@
+# PocketFlow Cookbook — consolidated requirements
+# Install: pip install -r requirements.txt
+#
+# Core framework
+pocketflow>=0.0.3
+
+# LLM providers (original recipes use OpenAI; shim replaces at runtime)
+openai>=1.0.0
+anthropic>=0.20.0
+
+# Web / search
+requests>=2.31.0
+aiohttp>=3.8.0
+httpx>=0.27.0
+duckduckgo-search>=7.5.2        # web search (provides duckduckgo_search module)
+beautifulsoup4>=4.12.0
+
+# Data / serialisation
+pyyaml>=6.0
+pydantic>=2.0.0
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Image / PDF
+Pillow>=10.0.0
+PyMuPDF>=1.22.0                 # fitz
+reportlab
+
+# Audio / speech
+soundfile
+scipy
+sounddevice
+
+# Vector search
+faiss-cpu>=1.7.0
+
+# CLI / async helpers
+click>=8.0.0
+python-dotenv>=1.0.0
+
+# Web frameworks (UI recipes: fastapi-*, gradio-*, streamlit-*)
+fastapi
+uvicorn[standard]>=0.29.0
+gradio>=5.29.1
+streamlit
+python-multipart
+
+# MCP (model-context-protocol)
+fastmcp
+
+# Observability (tracing recipe)
+langfuse>=2.0.0,<3.0.0

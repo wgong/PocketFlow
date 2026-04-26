@@ -1,25 +1,21 @@
+import click
 from flow import create_resume_processing_flow
 
+
+@click.command()
 def main():
-    # Initialize shared store
+    """Map-reduce pipeline: evaluate resumes in parallel and reduce to a ranked summary."""
     shared = {}
-    
-    # Create the resume processing flow
-    resume_flow = create_resume_processing_flow()
-    
-    # Run the flow
-    print("Starting resume qualification processing...")
-    resume_flow.run(shared)
-    
-    # Display final summary information (additional to what's already printed in ReduceResultsNode)
+    click.echo("Starting resume qualification processing...")
+    create_resume_processing_flow().run(shared)
     if "summary" in shared:
-        print("\nDetailed evaluation results:")
+        click.echo("\nDetailed evaluation results:")
         for filename, evaluation in shared.get("evaluations", {}).items():
             qualified = "✓" if evaluation.get("qualifies", False) else "✗"
             name = evaluation.get("candidate_name", "Unknown")
-            print(f"{qualified} {name} ({filename})")
-    
-    print("\nResume processing complete!")
+            click.echo(f"  {qualified} {name} ({filename})")
+    click.echo("\nResume processing complete!")
+
 
 if __name__ == "__main__":
     main()

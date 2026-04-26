@@ -1,39 +1,37 @@
-import sys
+import click
+from pathlib import Path
 from flow import create_podcast_flow
 from utils import DOCS
 
 
-def main():
-    """Generate a podcast from documents."""
-    # Accept an optional --output flag for the output filename
-    output_file = "podcast.mp3"
-    for arg in sys.argv[1:]:
-        if arg.startswith("--"):
-            output_file = arg[2:]
-            break
+@click.command()
+@click.option("--out", default="output/podcast.mp3", show_default=True,
+              help="File path to save the generated podcast audio")
+def main(out):
+    """Generate a podcast from documents using TTS."""
+    Path(out).parent.mkdir(parents=True, exist_ok=True)
 
-    flow = create_podcast_flow()
     shared = {
         "docs": DOCS,
-        "output_file": output_file,
+        "output_file": out,
     }
 
-    print("🎧 Starting Podcast Generation Pipeline")
-    print("=" * 50)
-    print(f"  📄 {len(DOCS)} source documents")
-    print(f"  💾 Output: {output_file}")
-    print()
+    click.echo("Starting Podcast Generation Pipeline")
+    click.echo("=" * 50)
+    click.echo(f"  {len(DOCS)} source documents")
+    click.echo(f"  Output: {out}")
+    click.echo()
+    click.echo("Step 1 — Analyzing documents for interesting nuggets")
+    click.echo("Step 2 — Writing conversational podcast script")
+    click.echo("Step 3 — Converting script to audio with TTS")
+    click.echo()
 
-    print("🔍 Step 1 — Analyzing documents for interesting nuggets")
-    print("✍️  Step 2 — Writing conversational podcast script")
-    print("🎙️  Step 3 — Converting script to audio with TTS")
-    print()
+    create_podcast_flow().run(shared)
 
-    flow.run(shared)
-
-    print("\n" + "=" * 50)
-    print(f"🎧 Podcast saved to: {shared.get('audio_file', output_file)}")
-    print("=" * 50)
+    audio_file = shared.get("audio_file", out)
+    click.echo("=" * 50)
+    click.echo(f"Podcast saved to: {audio_file}")
+    click.echo("=" * 50)
 
 
 if __name__ == "__main__":
