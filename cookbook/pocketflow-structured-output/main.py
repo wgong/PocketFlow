@@ -77,7 +77,14 @@ def main(input_path, out):
     Flow(start=ResumeParserNode(max_retries=3, wait=10)).run(shared)
 
     if "structured_data" in shared:
-        indexes = shared["structured_data"].get("skill_indexes") or []
+        raw_indexes = shared["structured_data"].get("skill_indexes") or []
+        # gemma3 may return [{0: "name"}, ...] instead of [0, 1, ...]
+        indexes = []
+        for item in raw_indexes:
+            if isinstance(item, int):
+                indexes.append(item)
+            elif isinstance(item, dict):
+                indexes.extend(int(k) for k in item.keys())
         if indexes:
             click.echo("\n--- Found Target Skills ---")
             for idx in indexes:

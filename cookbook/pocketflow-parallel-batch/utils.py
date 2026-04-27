@@ -8,7 +8,8 @@ from pathlib import Path
 # SPL shim: set SPL_ADAPTER (ollama|claude_cli) and SPL_MODEL env vars
 # Revert: change 'if False' back to 'if True' in the block below
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] if Path(__file__).resolve().parent.name == 'utils' else Path(__file__).resolve().parents[1]))
-from call_llm_shim import call_llm, call_llm_async
+from call_llm_shim import call_llm_async
+call_llm = call_llm_async  # nodes use: await call_llm(prompt)
 # [SPL-SHIM-OFF]
 
 # Async version of the simple wrapper, using Anthropic

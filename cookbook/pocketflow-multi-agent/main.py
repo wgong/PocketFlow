@@ -50,16 +50,23 @@ class AsyncGuesser(AsyncNode):
         if "past_guesses" not in shared:
             shared["past_guesses"] = []
         shared["past_guesses"].append(exec_res)
+        shared["turns"] = shared.get("turns", 0) + 1
+        if shared["turns"] >= shared.get("max_turns", 10):
+            click.echo(f"Game Over - Max turns ({shared.get('max_turns', 10)}) reached.")
+            await shared["hinter_queue"].put("GAME_OVER")
+            return "end"
         await shared["hinter_queue"].put(exec_res)
         return "continue"
 
 
-async def run_game(word, forbidden):
+async def run_game(word, forbidden, max_turns=10):
     shared = {
         "target_word": word,
         "forbidden_words": forbidden,
         "hinter_queue": asyncio.Queue(),
         "guesser_queue": asyncio.Queue(),
+        "max_turns": max_turns,
+        "turns": 0,
     }
 
     click.echo("=========== Taboo Game Starting! ===========")
@@ -89,10 +96,12 @@ async def run_game(word, forbidden):
               help="Target word the guesser must guess")
 @click.option("--forbidden", default="memory,past,remember,feeling,longing",
               show_default=True, help="Comma-separated list of forbidden words")
-def main(word, forbidden):
+@click.option("--max-turns", default=10, show_default=True,
+              help="Maximum number of guess turns before game ends")
+def main(word, forbidden, max_turns):
     """Play an async Taboo word-guessing game with two LLM agents."""
     forbidden_list = [w.strip() for w in forbidden.split(",")]
-    asyncio.run(run_game(word, forbidden_list))
+    asyncio.run(run_game(word, forbidden_list, max_turns=max_turns))
 
 
 if __name__ == "__main__":

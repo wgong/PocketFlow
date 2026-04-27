@@ -1,0 +1,56 @@
+Starting Podcast Generation Pipeline
+==================================================
+  4 source documents
+  Output: output/podcast.mp3
+
+Step 1 — Analyzing documents for interesting nuggets
+Step 2 — Writing conversational podcast script
+Step 3 — Converting script to audio with TTS
+
+Traceback (most recent call last):
+  File "/home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-notebook-lm/main.py", line 38, in <module>
+    main()
+  File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/click/core.py", line 1514, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/click/core.py", line 1435, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/click/core.py", line 1298, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gong2/anaconda3/envs/pocket/lib/python3.11/site-packages/click/core.py", line 853, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-notebook-lm/main.py", line 29, in main
+    create_podcast_flow().run(shared)
+  File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 16, in run
+    return self._run(shared)
+           ^^^^^^^^^^^^^^^^^
+  File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 50, in _run
+    def _run(self,shared): p=self.prep(shared); o=self._orch(shared); return self.post(shared,p,o)
+                                                  ^^^^^^^^^^^^^^^^^^
+  File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 48, in _orch
+    while curr: curr.set_params(p); last_action=curr._run(shared); curr=copy.copy(self.get_next_node(curr,last_action))
+                                                ^^^^^^^^^^^^^^^^^
+  File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 13, in _run
+    def _run(self,shared): p=self.prep(shared); e=self._exec(p); return self.post(shared,p,e)
+                                                  ^^^^^^^^^^^^^
+  File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 33, in _exec
+    if self.cur_retry==self.max_retries-1: return self.exec_fallback(prep_res,e)
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 28, in exec_fallback
+    def exec_fallback(self,prep_res,exc): raise exc
+                                          ^^^^^^^^^
+  File "/home/gong2/projects/wgong/PocketFlow/pocketflow/__init__.py", line 31, in _exec
+    try: return self.exec(prep_res)
+                ^^^^^^^^^^^^^^^^^^^
+  File "/home/gong2/projects/wgong/PocketFlow/cookbook/pocketflow-notebook-lm/nodes.py", line 26, in exec
+    return call_llm(prompt)
+           ^^^^^^^^^^^^^^^^
+  File "/home/gong2/projects/wgong/PocketFlow/cookbook/call_llm_shim.py", line 118, in call_llm
+    return _claude_cli(prompt)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/gong2/projects/wgong/PocketFlow/cookbook/call_llm_shim.py", line 84, in _claude_cli
+    raise RuntimeError(f"Claude CLI Rate Limit: {out if out else err}")
+RuntimeError: Claude CLI Rate Limit: You've hit your limit · resets 8:50pm (America/New_York)

@@ -29,7 +29,9 @@ def main(task, out):
             click.echo(f"  Last error: {attempts[-1]['error'][:200]}")
         else:
             n = len(attempts)
-            click.echo(f"  Status: SUCCESS{'  (first attempt)' if n == 0 else f'  (after {n} retr{\"y\" if n==1 else \"ies\"})'}")
+            retry_word = "y" if n == 1 else "ies"
+            status_detail = "(first attempt)" if n == 0 else f"(after {n} retr{retry_word})"
+            click.echo(f"  Status: SUCCESS  {status_detail}")
         click.echo("\n  Mermaid code:\n")
         for line in chart.split("\n"):
             click.echo(f"    {line}")

@@ -1,0 +1,73 @@
+Found 3 images:
+  - images/dog.jpg
+  - images/bird.jpg
+  - images/cat.jpg
+
+Running sequential batch flow...
+Processing 3 images with 3 filters...
+Total combinations: 9
+Loading image: images/dog.jpg
+Applying grayscale filter...
+Saved: output/dog_grayscale.jpg
+Loading image: images/dog.jpg
+Applying blur filter...
+Saved: output/dog_blur.jpg
+Loading image: images/dog.jpg
+Applying sepia filter...
+Saved: output/dog_sepia.jpg
+Loading image: images/bird.jpg
+Applying grayscale filter...
+Saved: output/bird_grayscale.jpg
+Loading image: images/bird.jpg
+Applying blur filter...
+Saved: output/bird_blur.jpg
+Loading image: images/bird.jpg
+Applying sepia filter...
+Saved: output/bird_sepia.jpg
+Loading image: images/cat.jpg
+Applying grayscale filter...
+Saved: output/cat_grayscale.jpg
+Loading image: images/cat.jpg
+Applying blur filter...
+Saved: output/cat_blur.jpg
+Loading image: images/cat.jpg
+Applying sepia filter...
+Saved: output/cat_sepia.jpg
+
+Running parallel batch flow...
+Processing 3 images with 3 filters...
+Total combinations: 9
+Loading image: images/dog.jpg
+Loading image: images/dog.jpg
+Loading image: images/dog.jpg
+Loading image: images/bird.jpg
+Loading image: images/bird.jpg
+Loading image: images/bird.jpg
+Loading image: images/cat.jpg
+Loading image: images/cat.jpg
+Loading image: images/cat.jpg
+Applying grayscale filter...
+Applying blur filter...
+Applying sepia filter...
+Applying grayscale filter...
+Applying blur filter...
+Applying sepia filter...
+Applying grayscale filter...
+Applying blur filter...
+Applying sepia filter...
+Saved: output/dog_grayscale.jpg
+Saved: output/dog_blur.jpg
+Saved: output/dog_sepia.jpg
+Saved: output/bird_grayscale.jpg
+Saved: output/bird_blur.jpg
+Saved: output/bird_sepia.jpg
+Saved: output/cat_grayscale.jpg
+Saved: output/cat_blur.jpg
+Saved: output/cat_sepia.jpg
+
+Timing Results:
+  Sequential: 14.24s
+  Parallel:   2.00s
+  Speedup:    7.12x
+
+Processing complete! Check the output/ directory for results.

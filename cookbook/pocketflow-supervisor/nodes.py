@@ -1,3 +1,4 @@
+import re
 from pocketflow import Node
 from utils import call_llm, search_web
 import yaml
@@ -52,9 +53,26 @@ search_query: <specific search query if action is search>
         # Call the LLM to make a decision
         response = call_llm(prompt)
         
-        # Parse the response to get the decision
-        yaml_str = response.split("```yaml")[1].split("```")[0].strip()
-        decision = yaml.safe_load(yaml_str)
+        # Parse the response — gemma3 often omits the | block indicator for
+        # multi-line thinking fields, breaking YAML. Use regex fallback.
+        decision = None
+        if "```yaml" in response or "```" in response:
+            try:
+                if "```yaml" in response:
+                    yaml_str = response.split("```yaml")[1].split("```")[0].strip()
+                else:
+                    yaml_str = response.split("```")[1].split("```")[0].strip()
+                decision = yaml.safe_load(yaml_str)
+            except yaml.YAMLError:
+                pass
+
+        if not decision:
+            # Fallback: extract key fields with regex
+            action_m = re.search(r"^action\s*:\s*(\w+)", response, re.MULTILINE)
+            query_m  = re.search(r"^search_query\s*:\s*(.+)", response, re.MULTILINE)
+            action = action_m.group(1).strip() if action_m else "answer"
+            query  = query_m.group(1).strip() if query_m else ""
+            decision = {"action": action, "search_query": query, "thinking": ""}
         
         return decision
     

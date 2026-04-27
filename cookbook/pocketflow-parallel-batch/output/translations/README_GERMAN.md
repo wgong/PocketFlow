@@ -1,0 +1,1 @@
+đợi một chút nhé! Tôi đang dịch.

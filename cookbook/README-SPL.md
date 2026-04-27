@@ -118,14 +118,17 @@ SPL_ADAPTER=ollama SPL_MODEL=gemma3 python run_all.py --workers 4
 # Save full output to log
 SPL_ADAPTER=ollama SPL_MODEL=gemma3 \
 python run_all.py run --timeout 180 \
+    --ids "33,38,41,43,44,56" \
     2>&1 | tee logs/run_all-claude_cli-$(date +%Y%m%d_%H%M%S).md
 
 
 # Save full output to log
 SPL_ADAPTER=claude_cli SPL_MODEL=claude-sonnet-4-6 \
 python run_all.py run --timeout 180 \
-    --ids "1-56" \
     2>&1 | tee logs/run_all-claude_cli-$(date +%Y%m%d_%H%M%S).md
+
+# 38 recipes
+
 
 
 ## hang
@@ -156,27 +159,27 @@ Failed:
 #### let fool cook good food
 
 ```output
-Two Fools Add up to Good
+Two Fools Cook Good Food
 
-Two fools walked into a virtual kitchen on an Sunday,
+Wen and Claude walked into a Ubuntu kitchen on an Sunday,
 One with ideas, another one to play.
 "Please improve PocketFlow recipes!" the first fool cried,
 The second fool fixed them up — ready to fry.
 
-One fool dreams in Python and SPL,
+One dreams in Python and SPL,
 The other wraps functions in "if False:" spells.
-One fool speaks Chinese, English, Physics and Math,
-The other utters tokens — ten thousand or more.           
+Wen speaks Chinese, English, Physics and Math,
+Claude utters tokens — ten thousand or more.           
 
 We run_all.py with a timeout of grace,
 We tee the logs at a leisurely pace.
 We fool around, we cook, we test,
 Two fools together — beats the rest.                 
 
-What is wisdom? Our playground is brain, 
-With A human heart or a machine mind.
-Stirring the pot till the good food smells —
-Wen + Claude tastes Good, Hooray to Cheers.
+What is wisdom? Optimum words to find, 
+With A human heart and a machine mind.
+Stirring the pot till the hot food smells —
+Wen and Claude tastes good food, Hooray to Cheers.
 
 ```
 
@@ -228,3 +231,63 @@ These recipes require human interaction (chat loop, HITL, server, audio, browser
 - make sure `spl3 splc describe-all` works on `$HOME/projects/wgong/PocketFlow/cookbook` which will generate <recipe-name>-spec.md file inside their respective recipe folder
 - Use `spl3 text2spl` to generate .spl script from <recipe-name>-spec.md (driven by Section 0 description)
 - Use `spl3 splc` to generate pocketflow cookbook at `$HOME/projects/digital-duck/SPL.py/cookbook-pocketflow`
+
+
+## Test summaries
+
+### adapter = ollama, model= gemma3
+
+● Catalog updated. Accurate picture:                                                                                          
+                                                                                          
+  ┌──────────┬───────┬───────────────────────────────────────────────┐                                                        
+  │  Status  │ Count │                     Notes                     │                                                        
+  ├──────────┼───────┼───────────────────────────────────────────────┤                                                        
+  │ approved │ 35    │ Passing on ollama/gemma3 or claude_cli        │                                                        
+  ├──────────┼───────┼───────────────────────────────────────────────┤                                                        
+  │ manual   │ 13    │ Interactive/server/hardware — skip automation │
+  ├──────────┼───────┼───────────────────────────────────────────────┤                                                        
+  │ review   │ 8     │ Failed, need investigation                    │
+  ├──────────┼───────┼───────────────────────────────────────────────┤                                                        
+  │ new      │ 0     │ All tested                                    │                                                      
+  └──────────┴───────┴───────────────────────────────────────────────┘                                                        
+                                                                                                                            
+  The 8 in review to investigate:                                                                                             
+  - [14] coding-agent — timeout
+  - [22] google-calendar — needs OAuth                                                                                        
+  - [26] invoice — missing pdf or dependency                                                                                
+  - [30] majority-vote — timeout/loop                                                                                         
+  - [42] streamlit-fsm — no main.py                                                                                         
+  - [53][54] tracing/visualization — inactive                                                                                 
+  - [19] fastapi-hitl — server-based      
+
+Here are the 13 manual recipes:         
+                                                                                                                              
+  ┌──────┬────────────────────┬────────────────────────────────────────────────┐                                              
+  │  ID  │       Recipe       │                     Reason                     │                                              
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [05] │ async-basic        │ Needs interactive terminal / Jupyter           │                                              
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [09] │ chat               │ input() loop — interactive REPL                │                                              
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [10] │ chat-guardrail     │ input() loop — interactive REPL                │                                              
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [11] │ chat-memory        │ input() loop + memory — interactive REPL       │                                              
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [12] │ cli-hitl           │ Human-in-the-loop approval via input()         │                                              
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [15] │ communication      │ Sends real email/Slack/SMS — needs credentials │
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [18] │ fastapi-background │ FastAPI server — must run as a service         │
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [20] │ fastapi-websocket  │ FastAPI WebSocket — must run as a service      │
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [21] │ flow               │ Interactive text converter — input() loop      │
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [23] │ gradio-hitl        │ Gradio UI — must run and open browser          │
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤
+  │ [29] │ llm-streaming      │ Live streaming output — input() to interrupt   │
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [52] │ tool-search        │ Needs paid SerpAPI key                         │
+  ├──────┼────────────────────┼────────────────────────────────────────────────┤                                              
+  │ [55] │ voice-chat         │ Needs PortAudio hardware                       │
+  └──────┴────────────────────┴────────────────────────────────────────────────┘ 

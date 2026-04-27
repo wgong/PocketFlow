@@ -22,7 +22,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-a2a",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "multi-agent"
     },
     {
@@ -33,7 +33,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-agent",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "agentic"
     },
     {
@@ -44,7 +44,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-agent-skills",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "agentic"
     },
     {
@@ -55,7 +55,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-agentic-rag",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "retrieval"
     },
     {
@@ -77,7 +77,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-batch",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "batch"
     },
     {
@@ -88,7 +88,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-batch-flow",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "batch"
     },
     {
@@ -99,7 +99,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-batch-node",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "batch"
     },
     {
@@ -154,7 +154,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-code-generator",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "agentic"
     },
     {
@@ -165,7 +165,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-coding-agent",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "review",
       "category": "agentic"
     },
     {
@@ -187,7 +187,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-debate",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "reasoning"
     },
     {
@@ -198,7 +198,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-deep-research",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "application"
     },
     {
@@ -241,8 +241,8 @@
       "dir": "pocketflow-flow",
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-flow",
       "main_file": "main.py",
-      "is_active": true,
-      "approval_status": "new",
+      "is_active": false,
+      "approval_status": "manual",
       "category": "basics"
     },
     {
@@ -253,7 +253,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-google-calendar",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "review",
       "category": "tool"
     },
     {
@@ -275,7 +275,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-heartbeat",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "agentic"
     },
     {
@@ -286,7 +286,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-hello-world",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "basics"
     },
     {
@@ -297,7 +297,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-invoice",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "review",
       "category": "application"
     },
     {
@@ -308,7 +308,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-judge",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "reasoning"
     },
     {
@@ -319,7 +319,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-lead-generation",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "application"
     },
     {
@@ -341,7 +341,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-majority-vote",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "review",
       "category": "reasoning"
     },
     {
@@ -352,7 +352,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-map-reduce",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "batch"
     },
     {
@@ -363,7 +363,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-mcp",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "tool"
     },
     {
@@ -374,7 +374,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-multi-agent",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "multi-agent"
     },
     {
@@ -385,7 +385,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-nested-batch",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "batch"
     },
     {
@@ -396,7 +396,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-newsletter",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "application"
     },
     {
@@ -407,7 +407,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-node",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "basics"
     },
     {
@@ -418,7 +418,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-notebook-lm",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "application"
     },
     {
@@ -429,7 +429,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-parallel-batch",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "batch"
     },
     {
@@ -440,7 +440,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-parallel-batch-flow",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "batch"
     },
     {
@@ -451,7 +451,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-rag",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "retrieval"
     },
     {
@@ -462,7 +462,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-self-healing-mermaid",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "agentic"
     },
     {
@@ -484,7 +484,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-structured-output",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "application"
     },
     {
@@ -495,7 +495,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-supervisor",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "multi-agent"
     },
     {
@@ -506,7 +506,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-tao",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "reasoning"
     },
     {
@@ -517,7 +517,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-text2sql",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "application"
     },
     {
@@ -528,7 +528,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-thinking",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "reasoning"
     },
     {
@@ -539,7 +539,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-tool-crawler",
       "main_file": "main.py",
       "is_active": false,
-      "approval_status": "manual",
+      "approval_status": "approved",
       "category": "tool"
     },
     {
@@ -550,7 +550,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-tool-database",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "tool"
     },
     {
@@ -561,7 +561,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-tool-embeddings",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "tool"
     },
     {
@@ -572,7 +572,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-tool-pdf-vision",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "tool"
     },
     {
@@ -627,7 +627,7 @@
       "source_dir": "$HOME/projects/wgong/PocketFlow/cookbook/pocketflow-workflow",
       "main_file": "main.py",
       "is_active": true,
-      "approval_status": "new",
+      "approval_status": "approved",
       "category": "basics"
     }
   ]

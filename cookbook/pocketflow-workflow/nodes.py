@@ -98,8 +98,6 @@ Requirements:
             print()
         print("===========================\n")
 
-        write_file(topic=shared["topic"], content=shared["draft"], style="draft", out_dir="output")
-
         return "default"
 
 class ApplyStyle(Node):
@@ -135,5 +133,4 @@ class ApplyStyle(Node):
         print(exec_res)
         print("\n========================\n")
 
-        write_file(topic=shared["topic"], content=shared["final_article"], style="final", out_dir="output")
         return "default" 
