@@ -1,53 +1,54 @@
 ## 0. High-level Description
-The research agent workflow implements an iterative search-and-synthesize pattern using a `WHILE` loop to refine its knowledge base until a definitive answer can be produced. It begins with a `CREATE FUNCTION` for the decision-making prompt, which uses `GENERATE` to produce a YAML-formatted plan containing a thinking process and a chosen action. The control flow uses `EVALUATE` to branch based on the LLM's decision: if the action is "search", the workflow executes a `CALL` to a web search tool to update the `@context` variable before looping back to the decision step. Once the LLM determines it has sufficient information, it selects the "answer" action, triggering a final `GENERATE` call to a synthesis function that crafts the response. Finally, the workflow uses `RETURN` to provide the `@answer` to the user, terminating the process once the research goal is met.
+
+This workflow implements a research agent that uses a WHILE loop pattern to iteratively decide between web search and question answering until sufficient information is gathered. The workflow defines three CREATE FUNCTION prompts: a decision-making function that evaluates current context and returns either "search" or "answer" actions, a web search function that retrieves information via CALL tool, and a final answer generation function that synthesizes research into a comprehensive response. The control flow uses EVALUATE constructs to branch on the decision function's output - routing to either web search (which loops back to decision-making) or final answer generation (which terminates with RETURN). The workflow maintains shared state through @context and @search_query variables that accumulate research findings across iterations. Exception handling manages YAML parsing errors in the decision function's structured output, and the workflow includes side-effects via CALL for web search API integration and optional file output.
 
 ## 1. Purpose
-This implementation creates an autonomous research agent that iteratively searches the web to gather context until it has enough information to provide a comprehensive answer to a user's question.
+
+This implementation creates an autonomous research agent that iteratively searches the web and synthesizes information to provide comprehensive answers to user questions.
 
 ## 2. SPL ↔ Python — PocketFlow Construct Mapping
 
 | SPL Construct | Python — PocketFlow Equivalent | Notes |
-| :--- | :--- | :--- |
-| `WORKFLOW` | `create_agent_flow()` / `Flow` | Defines the overall structure and entry point of the graph. |
-| `CREATE FUNCTION` | Prompt strings in `DecideAction` and `AnswerQuestion` | Templates for LLM interactions with `{question}` and `{context}` slots. |
-| `GENERATE` | `call_llm(prompt)` in `exec` methods | The actual invocation of the LLM to process a prompt. |
-| `CALL` | `search_web_duckduckgo(query)` | Invocation of an external tool/side-effect (web search). |
-| `EVALUATE` | `decide - "action" >> next_node` | Conditional routing logic based on the output of a node. |
-| `WHILE` | `search - "decide" >> decide` | The cyclic connection in the graph that creates the loop. |
-| `@vars` | `shared` dictionary | The shared state object passed between nodes. |
-| `RETURN` | `shared["answer"]` + Flow termination | The final state of the shared dictionary upon completing the `AnswerQuestion` node. |
-| `EXCEPTION` | (Implicit in `parse_yaml_safely`) | Error handling during YAML parsing of LLM output. |
+|---------------|--------------------------------|-------|
+| WORKFLOW | `Flow(start=decide)` | Entry point and node orchestration |
+| CREATE FUNCTION | `Node.exec()` method | Each Node class contains a prompt template |
+| GENERATE | `call_llm(prompt)` | LLM invocation with prompt string |
+| CALL | `search_web_duckduckgo(query)` | Side-effect tool for web search |
+| WHILE | `decide - "search" >> search` + `search - "decide" >> decide` | Cyclic node connections create loop |
+| EVALUATE | `decide - "action" >> target_node` | Conditional routing based on LLM output |
+| @variables | `shared` dictionary | Persistent state across nodes |
+| RETURN WITH | `shared["answer"] = exec_res` + flow termination | Final result storage |
+| EXCEPTION WHEN | `try/except` in `parse_yaml_safely()` | YAML parsing error recovery |
 
 ## 3. Logical Functions / Prompts
 
-### `DecideAction`
-- **Role:** The controller/router of the agent. It analyzes the current research context and decides whether more information is needed or if a final answer can be written.
-- **Key Prompt Conventions:** 
-    - Employs a **YAML Output Format** with specific keys: `thinking`, `action`, `reason`, `answer`, and `search_query`.
-    - Uses **Block Scalars (`\|`)** to ensure multi-line LLM responses do not break YAML parsing.
-    - Defines a clear **Action Space** (`search` or `answer`) for the LLM to choose from.
+**DecideAction Function**
+- Role: Strategic decision-making between search and answer actions
+- Key conventions: YAML output format with `|` block scalars, structured thinking/reason/action fields
+- Scoring: Binary classification (search/answer) based on context sufficiency
 
-### `AnswerQuestion`
-- **Role:** The final synthesis step.
-- **Key Prompt Conventions:**
-    - Provides a `CONTEXT` section containing the original question and the accumulated `Research` results.
-    - Instructs the LLM to provide a "comprehensive answer" based specifically on the gathered information.
+**SearchWeb Function** 
+- Role: Web information retrieval via DuckDuckGo API
+- Key conventions: Query string input, structured results with Title/URL/Snippet format
+- Output: Formatted search results appended to context
+
+**AnswerQuestion Function**
+- Role: Final synthesis of research into comprehensive answer
+- Key conventions: Question + research context input, natural language response
+- Output: Complete answer ready for user consumption
 
 ## 4. Control Flow
-1. **Initial Step:** The workflow starts at the `DecideAction` node.
-2. **Loop Condition (`WHILE`):** The agent enters a loop where it generates a decision based on the current `@context` (initially empty).
-3. **Branch Logic (`EVALUATE`):**
-    - **`WHEN action == 'search'`**: The workflow executes the `SearchWeb` node, which `CALL`s the DuckDuckGo tool, appends results to `@context`, and returns to `DecideAction`.
-    - **`WHEN action == 'answer'`**: The workflow proceeds to the `AnswerQuestion` node.
-4. **Termination:** The `AnswerQuestion` node generates the final `@answer`, stores it in the shared state, and returns a `done` status to terminate the `WORKFLOW`.
+
+Initial step: GENERATE DecideAction with current @context and @question → EVALUATE decision output WHEN contains('search') THEN route to SearchWeb, update @search_query → CALL web search tool, append results to @context → loop back to DecideAction → EVALUATE WHEN contains('answer') THEN route to AnswerQuestion → GENERATE final synthesis → RETURN WITH status=complete, answer=@final_response. The WHILE loop continues until DecideAction determines sufficient information exists to provide a quality answer.
 
 ## 5. How to Regenerate as SPL
+
 ```bash
 # Step 1 — generate SPL from this spec (Section 0 above as text2spl input)
-spl3 text2spl --description "The research agent workflow implements an iterative search-and-synthesize pattern using a WHILE loop to refine its knowledge base until a definitive answer can be produced. It begins with a CREATE FUNCTION for the decision-making prompt, which uses GENERATE to produce a YAML-formatted plan containing a thinking process and a chosen action. The control flow uses EVALUATE to branch based on the LLM's decision: if the action is 'search', the workflow executes a CALL to a web search tool to update the @context variable before looping back to the decision step. Once the LLM determines it has sufficient information, it selects the 'answer' action, triggering a final GENERATE call to a synthesis function that crafts the response. Finally, the workflow uses RETURN to provide the @answer to the user, terminating the process once the research goal is met." --mode workflow
+spl3 text2spl --description "This workflow implements a research agent that uses a WHILE loop pattern to iteratively decide between web search and question answering until sufficient information is gathered. The workflow defines three CREATE FUNCTION prompts: a decision-making function that evaluates current context and returns either 'search' or 'answer' actions, a web search function that retrieves information via CALL tool, and a final answer generation function that synthesizes research into a comprehensive response. The control flow uses EVALUATE constructs to branch on the decision function's output - routing to either web search (which loops back to decision-making) or final answer generation (which terminates with RETURN). The workflow maintains shared state through @context and @search_query variables that accumulate research findings across iterations. Exception handling manages YAML parsing errors in the decision function's structured output, and the workflow includes side-effects via CALL for web search API integration and optional file output." --mode workflow
 
 # Step 2 — compile to any target
-spl3 splc compile research_agent.spl --lang python/pocketflow
-spl3 splc compile research_agent.spl --lang python/langgraph
-spl3 splc compile research_agent.spl --lang go
+spl3 splc compile <output.spl> --lang python/pocketflow
+spl3 splc compile <output.spl> --lang python/langgraph  
+spl3 splc compile <output.spl> --lang go
 ```
